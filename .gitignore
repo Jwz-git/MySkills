@@ -92,3 +92,6 @@ temp/
 dist/
 build/
 lib/
+
+
+.claude/
