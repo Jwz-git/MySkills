@@ -1,12 +1,19 @@
 ---
 name: img2md
-description: 将图片（JPG、PNG、WEBP、BMP、GIF、TIFF）转换为结构清晰的Markdown文档，忠实还原文字内容并保留标题、列表、表格等格式结构。当用户需要从图片中提取内容、将截图转为文本、把文档照片转换成Markdown、对图片进行OCR识别、从图片提取文字或根据图片内容创建Markdown文件时（即使未明确提及"img2md"），以及当用户提供图片并要求读取、转录、提取、总结、识别其中内容时，或者用户说"帮我看看这个图"、"识别这张图"、"把这个截图变成可编辑的"、"read this image"、"what does this screenshot say"时，均应使用此技能。对于长图片（高度超过1500像素），会自动裁剪为多个片段处理，确保裁剪线不穿过文字，最后合并结果。依赖会自动安装，无需用户手动操作。
+description: 将 JPG/PNG/WEBP/BMP/GIF/TIFF 等图片、截图、扫描件和文档照片转换为结构清晰的 Markdown。凡是用户要从图片中提取文字、OCR、转录截图、把图片变成可编辑文本/Markdown、读取图片内容、识别表格或代码截图，或说“帮我看看这个图”“这张图写了什么”“read this screenshot”，都应使用本技能。默认忠实转录并保留标题、列表、表格、代码块等结构；用户要求总结时，也先提取可见文字再总结。长图会通过 prepare_image.py 裁剪为多个有序片段后合并。
 compatibility: requires Python 3 with PIL/Pillow and numpy (auto-installed by prepare_image.py)
 ---
 
 # img2md — 图片转 Markdown 转换器
 
-将图片内容转换为准确、结构清晰的 Markdown 文档。核心原则是**忠实还原**——逐字提取，不修改、不总结、不推测。
+将图片内容转换为准确、结构清晰的 Markdown 文档。核心原则是**忠实还原**：先逐字提取，再按用户要求保存、合并或总结。
+
+## 触发边界
+
+- 需要 OCR、转录、提取表格/代码/列表、把截图变成 Markdown：使用本技能。
+- 用户只要“描述图片里有什么”且图片几乎无文字：可输出客观视觉描述，并标注无法转换为 Markdown 的内容。
+- 用户要求编辑、生成或美化图片：不要使用本技能，转向图像生成/编辑能力。
+- 多张图片、GIF、多页 TIFF、低质量图片等情况，先读 `references/edge_cases.md`。
 
 ## 工作流程
 
@@ -18,15 +25,16 @@ compatibility: requires Python 3 with PIL/Pillow and numpy (auto-installed by pr
 python <skill_path>/scripts/prepare_image.py <图片路径> [输出目录]
 ```
 
-脚本输出 JSON，关注两个字段：
+脚本输出 JSON，关注以下字段：
 - `needs_split`: 是否进行了裁剪
-- `files_to_read`: 待读取的文件路径列表（**必须按此列表顺序读取**）
+- `files_to_read`: 待读取的文件路径列表（按此列表顺序读取）
+- `split_output_dir`: 长图裁剪片段目录（仅 `needs_split: true` 时存在）
 
 ### Step 2: 提取内容
 
-按 `files_to_read` 列表逐个用 `Read` 工具读取图片，对每个文件按从左到右、从上到下的顺序扫描：主标题 → 正文 → 列表 → 表格 → 图表 → 注释。（页眉、页码、水印等装饰性内容应忽略，详见"可忽略的内容"一节）
+按 `files_to_read` 列表逐个用可用的图片读取/视觉工具读取图片。对每个文件按从左到右、从上到下的顺序扫描：主标题 → 正文 → 列表 → 表格 → 图表 → 注释。（页眉、页码、水印等装饰性内容应忽略，详见"可忽略的内容"一节）
 
-详细的格式对照表和转换示例见 `references/format_guide.md`。
+遇到表格、代码、流程图或混合版面时，读取 `references/format_guide.md` 对照格式。
 
 ### Step 3: 合并结果（如需要）
 
@@ -34,12 +42,13 @@ python <skill_path>/scripts/prepare_image.py <图片路径> [输出目录]
 
 ### Step 4: 输出文件
 
-将 Markdown 文件保存到 `/workspace/` 目录。
+将 Markdown 文件保存到用户指定目录；若用户未指定，优先保存到当前工作区，其次保存到图片同级目录。输出前告知实际文件路径。
 
 **文件命名规则：**
 1. 优先使用图片中的主标题（例：`2024年Q1销售报告.md`）
 2. 无明确标题时用 3-5 个关键词概括（例：`会议记录_预算讨论.md`）
 3. 避免使用 "output"、"result"、"文档" 等无意义名称
+4. 文件名冲突时追加序号，不覆盖已有文件
 
 ## 文字提取原则
 
@@ -47,7 +56,7 @@ python <skill_path>/scripts/prepare_image.py <图片路径> [输出目录]
 
 - **逐字提取**：每一个字、数字、符号、标点都必须原样输出
 - **禁止修改**：不纠正错别字、不改语法、不润色、不简化、不扩展
-- **禁止总结**：不要把多段文字合并成一段
+- **禁止默认总结**：除非用户明确要求总结，否则不要把多段文字合并成一段
 - **禁止推测**：看不清的地方用 `[unclear]` 标记
 - **结构保留**：标题层级、列表格式、表格格式、段落分隔都必须在输出中体现
 
@@ -94,7 +103,7 @@ python <skill_path>/scripts/prepare_image.py <图片路径> [输出目录]
 
 ## 边界情况处理
 
-多图批量输入、GIF 动图、多页 TIFF 等特殊情况的处理方式见 `references/edge_cases.md`。
+多图批量输入、GIF 动图、多页 TIFF、低质量图片等特殊情况的处理方式见 `references/edge_cases.md`。处理前先确认用户是否希望多图合并为一个 Markdown 文件。
 
 ## 检查清单
 
@@ -105,4 +114,4 @@ python <skill_path>/scripts/prepare_image.py <图片路径> [输出目录]
 - [ ] 标题层级、列表、表格格式正确（详见 `references/format_guide.md`）
 - [ ] 不确定的地方都用 `[unclear]` 等标记
 - [ ] 没有添加任何自己的评论或解释
-- [ ] 输出文件已保存到 `/workspace/`
+- [ ] 输出文件已保存到用户指定目录、当前工作区或图片同级目录，并已告知路径

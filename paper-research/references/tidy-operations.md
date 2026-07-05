@@ -12,7 +12,7 @@
 **原文**: [本地](论文/论文原件/文件名.pdf) [网络](https://arxiv.org/abs/XXXX.XXXXX)
 ```
 
-**查找 arXiv 链接：** 优先在笔记正文中搜索 `arxiv.org`，没有则使用 `tavily-search-mcp` 搜索论文 arXiv 编号。
+**查找 arXiv 链接：** 优先在笔记正文中搜索 `arxiv.org`，没有则使用可用的 Web/论文检索工具搜索论文 arXiv 编号或官方页面。
 
 ### 模式 B：标签层级重构（扁平 → paper/xxx）
 
