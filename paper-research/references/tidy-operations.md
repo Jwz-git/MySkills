@@ -1,121 +1,200 @@
-# 论文笔记格式标准化指南
+# 批量重写与格式整理操作规范
 
-供 Phase 5（格式标准化与归档）使用。SKILL.md 中概述了工作流，本文档提供完整操作模式、标签映射和注意事项。
+本文件同时覆盖 `batch-rewrite` 与 `tidy-only`。两者权限不同：
 
-# 1. 操作模式
+- `batch-rewrite`：用户授权重建正文，可依据论文原文修正事实、结构与表达。
+- `tidy-only`：只改元数据、标签、链接和标题层级，保留正文观点；发现事实问题只报告。
 
-### 模式 A：添加原文 PDF 链接
+执行前先写明模式，不能把二者混用。
 
-在 frontmatter 的 `---` 之后、正文第一行之前插入：
+## 1. 事务式批量流程
 
-```markdown
-**原文**: [本地](论文/论文原件/文件名.pdf) [网络](https://arxiv.org/abs/XXXX.XXXXX)
+### 1.1 Inventory
+
+使用 `find`、Python `pathlib` 或本技能脚本枚举目标，不依赖 `rg`。为每个 Markdown 记录：
+
+| 字段 | 说明 |
+|---|---|
+| `input_md` | 现有笔记绝对路径 |
+| `output_md` | 目标路径；重写默认同路径 |
+| `pdf` | 本地 PDF；可为空 |
+| `official_url` | arXiv/DOI/会议/出版社页 |
+| `canonical_id` | DOI 或 arXiv ID |
+| `source_version` | 实际阅读版本/日期 |
+| `analysis_scope` | full-text / partial / abstract-only |
+| `figure_dir` | 最终图片目录 |
+| `status` | discovered/mapped/staged/validated/rewritten/failed |
+| `notes` | 歧义、缺失、人工决策 |
+
+不要只按 stem 自动认定映射。先用 stem 找候选，再以 PDF 首页标题、作者、canonical ID 核对。文件名与方法简称不一致时保留用户文件名，并在 manifest/笔记中说明。
+
+### 1.2 Snapshot
+
+在本次运行临时目录保存：
+
+- 原始目标文件副本。
+- 文件 SHA-256。
+- inventory/manifest。
+- 已存在图片目录清单。
+
+快照用于回溯和质量比较，不允许覆盖用户的正式目录。临时目录按 run 隔离，只删除本次 manifest 拥有的文件。
+
+### 1.3 Stage
+
+逐篇生成独立的暂存产物与图像清单。一个文件失败时记录 `failed`，继续处理其他文件。不要在内容尚未读取、路径未核验前进行全目录机械替换。
+
+`batch-rewrite` 使用 `analysis-guide.md` 唯一模板；`tidy-only` 只应用第 3 节允许的操作。
+
+### 1.4 Validate
+
+对每个暂存文件执行：
+
+1. 结构/路径自动校验。
+2. PDF 身份和版本核对。
+3. 一句话总结、证据表、所有高亮数字与强结论的原文抽查。
+4. 每张最终图视觉检查。
+
+错误文件不得替换正式目标；警告需汇总并判断是否可接受。
+
+### 1.5 Replace
+
+只把通过验收的文件放入正式目录。保留用户未在范围内的文件与资产；不删除未知文件。若因个别失败导致目录暂时混合新旧版本，在报告中逐项说明，不能声称“全部完成”。
+
+### 1.6 Report
+
+至少报告：
+
+```text
+discovered: N
+mapped: N
+rewritten: N
+unchanged: N
+failed: N
+errors: N
+warnings: N
 ```
 
-**查找 arXiv 链接：** 优先在笔记正文中搜索 `arxiv.org`，没有则使用可用的 Web/论文检索工具搜索论文 arXiv 编号或官方页面。
+逐项列出失败文件、错误和未解决警告。汇总表中的“通过”必须对应实际自动校验和证据抽查。
 
-### 模式 B：标签层级重构（扁平 → paper/xxx）
+## 2. Frontmatter 规范
 
-| 旧标签 | 新标签 |
-|--------|--------|
-| `VLM` | `paper/vlm` |
-| `LoRA` | `paper/lora` |
-| `NAS` | `paper/nas` |
-| `transformer` | `paper/transformer` |
-| `localization` | `paper/localization` |
-| `detection` | `paper/detection` |
-| `segmentation` | `paper/segmentation` |
-| `LLM` | `paper/llm` |
-| `diffusion` | `paper/diffusion` |
-| `multi-modal` | `paper/multi-modal` |
-| `3D` | `paper/3d` |
-
-> 首字母大小写均可，根据用户现有风格保持一致。层级标签在 Obsidian 中可作为可点击筛选项。
-
-### 模式 C：标准化文档结构
-
-将笔记按“补全 frontmatter → 添加/修正原文链接 → 补全 section 结构 → 添加 `==高亮==` → 规范 callout 类型”的顺序调整。
-
-1. **补全 frontmatter** — 确保 `title`、`date`、`tags`（paper/xxx）、`aliases` 完整
-2. **添加/修正原文链接行** — 统一格式 `**原文**: [本地](path) [网络](url)`
-3. **补全 section 结构**：
-   - `# 一句话总结` — 若缺，从摘要提取核心贡献
-   - `# 论文基本信息` — 若缺，从正文提取元数据填入标准表格
-   - `> [!info] 论文定位` callout — 定位论文所属领域
-   - `# 核心内容详解` — 按 h2/h3 层级组织
-   - `# 关键原图与图解` — 嵌入已提取的原论文图片并补充图解；不新增 Mermaid 图
-   - `# 总结` — abstract callout 汇总
-4. **添加 `==高亮==`** — 标记关键术语和核心数字
-5. **规范 callout 类型** — 使用标准 callout
-
-### 模式 D：清理 frontmatter 冗余属性
-
-检测并移除 `original_pdf`、`arxiv`、`pdf`、`category` 等冗余字段：
+固定字段和顺序：
 
 ```yaml
-# 删除这一行
-original_pdf: 论文/论文原件/XXX.pdf
+---
+title: "论文完整标题"
+date: YYYY-MM-DD
+tags:
+  - paper/topic-one
+  - paper/topic-two
+aliases:
+  - Paper Acronym
+---
 ```
 
----
+规则：
 
-# 2. 映射规则
+- `batch-rewrite` 同一 run 使用同一整理日期；`tidy-only` 保留合法的既有日期，除非用户要求更新。
+- 标签为唯一的 `paper/<lower-kebab-case>`，通常 2–5 个；不用 `VLM`、`LoRA` 等扁平标签。
+- aliases 去重，包含论文简称、常用方法名或用户已有可靠别名。
+- 移除 `original_pdf`、`arxiv`、`pdf`、`category` 等与正文原文行重复的冗余字段。
+- YAML 中含 `:`、`#`、`&` 或引号的标题优先使用双引号并正确转义。
 
-根据文件名模式自动匹配 MD 与 PDF：
+常用标签示例：
 
-| MD 文件 | 对应 PDF |
-|---------|---------|
-| `AI分析/MLP-Memory.md` | `论文原件/MLP-Memory.pdf` |
-| `AI分析/VLM-Loc.md` | `论文原件/VLM-Loc.pdf` |
-| `分析/xxx.md` | `论文原件/xxx.pdf` |
+| 概念 | 标签 |
+|---|---|
+| Vision-Language Model | `paper/vlm` |
+| Large Language Model | `paper/llm` |
+| LoRA | `paper/lora` |
+| NAS | `paper/nas` |
+| Retrieval | `paper/retrieval` |
+| Localization | `paper/localization` |
+| Point cloud | `paper/point-cloud` |
+| Multimodal | `paper/multimodal` |
+| Embedding | `paper/embedding` |
+| Memory | `paper/memory` |
+| Benchmark | `paper/benchmark` |
 
-匹配逻辑：MD 文件名（不含路径）与 PDF 文件名匹配。建议统一使用基于标题的简短命名（如 `MLP-Memory.md` ↔ `MLP-Memory.pdf`），提取论文标题中的核心关键词，简洁直观。不匹配时先向用户确认映射关系。
+标签表达主题，不把会议、年份或每个方法简称都变成标签。
 
----
+## 3. 原文链接与路径
 
-# 3. 常见注意事项
+原文行是 frontmatter 后第一个非空块：
 
-- PDF 路径使用相对路径（相对于 vault 根目录）：`论文/论文原件/文件名.pdf`
-- 无对应 PDF 的笔记不添加 `[本地]` 链接，或只添加 `[网络]` 链接
-- 同一 PDF 对应多个 MD 文件时，每个文件都添加相同链接
-- `**原文**:` 行插入在 frontmatter 之后、正文第一行之前
-- 不随意删除正文中的图片引用；已有引用需保留并检查路径。若本次也提取了论文图片，使用 `images/论文名/` 中已筛选、重命名的文件，并在正文中按需嵌入
-- 修改 section 结构时仅添加缺失的标题和框架，不重写用户已有内容
-- 保持用户原有的分析和评论不变
-
----
-
-# 4. 标准 callout 使用指南
-
-> 完整 callout 规范见 `analysis-guide.md` §2，本表仅列出 tidy 阶段最常用类型。
-
-| Callout 类型 | 适用场景 | 示例标题 |
-|-------------|----------|---------|
-| `> [!info]` | 论文定位、背景知识 | `论文定位` |
-| `> [!warning]` | 局限性、研究空白、待改进 | `研究空白`、`待改进之处`、`局限性` |
-| `> [!success]` | 关键发现、核心结果 | `关键发现`、`核心结果` |
-| `> [!note]` | 补充信息、模型列表、优势 | `代表性 VLM 模型`、`四大核心优势` |
-| `> [!tip]` | 方法优势、实用技巧 | `优势` |
-| `> [!important]` | 关键公式、核心机制 | `关键公式` |
-| `> [!abstract]` | 最终总结 | `论文总结` |
-
----
-
-# 5. 校验方式
-
-编辑后使用 grep 确认：
-1. 旧值已消失：搜索旧标签/属性值
-2. 新值已出现：搜索新标签、`原文` 链接行、标准 section 标题
-
-对每个检查报告通过/失败。
-
----
-
-# 6. 汇总报告示例
-
+```markdown
+**原文**: [本地](../论文原件/Paper.pdf) [网络](https://arxiv.org/abs/0000.00000)
 ```
-| 目录 | 文件数 | 变更类型 | 状态 |
-|------|--------|---------|------|
-| 论文/AI分析/ | 10 | 添加原文链接 + 整理标签 | 通过 |
-| 论文/分析/ | 5 | 标准化文档结构 | 通过 |
+
+按资源可用性省略本地或网络项。路径必须根据 Markdown 文件实际位置计算，不能假设 vault 根路径会被普通 Markdown 解析。
+
+特殊字符路径：
+
+```markdown
+[本地](<../论文原件/Point-Bind & Point-LLM.pdf>)
 ```
+
+外部链接优先 DOI/正式会议或期刊页；预印本可保留 arXiv。错误 ID 必须先核对标题和 PDF 水印再修正。
+
+## 4. `tidy-only` 允许的操作
+
+1. 补全或规范 frontmatter。
+2. 扁平标签映射为 `paper/...` 并去重。
+3. 添加/修正本地 PDF 与官方网络链接。
+4. 只在不改变语义时调整一级/二级标题和空行。
+5. 校验并修复已存在的图片相对路径。
+6. 删除明确的模板占位符或冗余字段时，先确认不会丢失用户内容。
+
+`tidy-only` 不应：
+
+- 凭摘要补写方法、实验或局限。
+- 删除用户分析或评论。
+- 用新的通用模板覆盖整篇正文。
+- 把 Mermaid 自动替换成假装来自论文的图。
+
+若用户需要完全统一且现有正文不满足模板，应明确切换到 `batch-rewrite`。
+
+## 5. `batch-rewrite` 内容规则
+
+1. 以完整 PDF/官方材料重建正文，不能只润色旧笔记；旧笔记可作为问题清单或线索。
+2. 旧笔记与原文冲突时采用原文，并修复标题、ID、公式方向、指标口径和链接。
+3. 去除所有 Mermaid，用原论文关键图或说明无图原因。
+4. 所有文件使用同一精确标题层级和证据表格式。
+5. 将旧 `[待补充]`、`[推断]` 转换为明确缺失状态或有依据的分析判断。
+6. 保留有价值的知识库内部链接，但放入相关小节，不能新增额外一级标题。
+7. 对 PDF 缺失或材料受限的文件降级分析依据，不用其他相邻论文替代。
+
+## 6. 映射与命名
+
+- 默认保留已有 Markdown 文件名，避免破坏 Obsidian 链接。
+- PDF 同名只是候选映射；使用标题、作者、ID 确认。
+- 新建笔记名发生冲突时追加 canonical ID，例如 `Retrieval-2410.00001.md`。
+- 图像目录默认使用现有 note stem；manifest 记录 note、PDF、图像目录三者关系。
+- 一篇联合论文包含多个方法时保持单一来源，不因方法名拆成多篇。
+
+## 7. 自动校验
+
+```bash
+python3 scripts/validate_notes.py /path/to/AI分析 --strict
+```
+
+检查范围包括：
+
+- frontmatter 字段、日期、标签和 aliases。
+- 原文行位置和本地链接。
+- 五个一级标题、五个核心二级标题及顺序。
+- 核心证据表、分析依据、定位数量。
+- info/abstract callout。
+- Mermaid、`[待补充]`、TODO、模板占位符。
+- 图片链接、alt 和图号/页码说明。
+- 目录内 canonical ID 重复。
+
+脚本的 warning 不代表事实正确。批量完成后仍需按照 `evidence-policy.md` 做人工证据审计。
+
+## 8. 远程与受限环境
+
+- 不假设 `rg` 存在；使用 `find` 或 Python `pathlib`。
+- 不假设 PyMuPDF、OCR 或 YAML 库存在；基础清单和校验脚本仅依赖 Python 标准库。
+- 依赖缺失时优先降级并报告，不隐式安装到全局环境。
+- 网络不可用时使用本地 PDF；需要核验动态事实但无法联网时写 `未核验`。
+
