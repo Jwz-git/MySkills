@@ -19,7 +19,6 @@ EXPECTED_H1 = [
     "一句话总结",
     "论文基本信息",
     "核心内容详解",
-    "关键原图与图解",
     "总结",
 ]
 EXPECTED_CORE_H2 = [
@@ -252,12 +251,12 @@ def validate_file(path: Path, strict: bool) -> FileResult:
 
     try:
         core_start = next(i for i, line in enumerate(lines) if line == "# 核心内容详解")
-        figure_start = next(i for i, line in enumerate(lines) if line == "# 关键原图与图解")
-        core_h2 = [m.group(1).strip() for line in lines[core_start + 1 : figure_start] if (m := H2_RE.match(line))]
+        summary_start = next(i for i, line in enumerate(lines) if line == "# 总结")
+        core_h2 = [m.group(1).strip() for line in lines[core_start + 1 : summary_start] if (m := H2_RE.match(line))]
         if core_h2 != EXPECTED_CORE_H2:
             add(issues, "ERROR", "structure.core_h2", f"核心二级标题应为 {EXPECTED_CORE_H2}，实际为 {core_h2}")
     except StopIteration:
-        core_start, figure_start = 0, len(lines)
+        core_start, summary_start = 0, len(lines)
 
     if "> [!info] 论文定位" not in text:
         add(issues, "ERROR", "callout.info", "缺少 > [!info] 论文定位")

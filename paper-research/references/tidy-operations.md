@@ -182,7 +182,7 @@ python3 scripts/validate_notes.py /path/to/AI分析 --strict
 
 - frontmatter 字段、日期、标签和 aliases。
 - 原文行位置和本地链接。
-- 五个一级标题、五个核心二级标题及顺序。
+- 四个一级标题、五个核心二级标题及顺序。
 - 核心证据表、分析依据、定位数量。
 - info/abstract callout。
 - Mermaid、`[待补充]`、TODO、模板占位符。
