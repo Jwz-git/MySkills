@@ -1,0 +1,81 @@
+# CLIP Review Session Example
+
+This is a demonstration transcript of an interactive active recall review session for the CLIP paper, showing the transition through the 4 stages, feedback styling, and final scoring.
+
+---
+
+### **Stage 1: Free Recall (自由回忆)**
+
+**AI**:
+> 请不用看笔记，用一句话说明 CLIP 这篇论文解决什么问题，以及它的核心方法是什么。
+
+**User**:
+> CLIP 解决了以前图片模型只能分类固定物体的问题。它用互联网上找的大量图片和配对的文字，通过对比学习让图片编码器和文本编码器在一个空间里对齐，从而不用微调就能直接做任意物体的零样本分类。
+
+**AI 反馈**:
+> **掌握正确**：准确指出了克服固定类别限制（开放世界分类）的目标，指出了互联网图文对数据集和对比对齐方法，以及实现了 zero-shot 分类。
+> **遗漏内容**：未提及具体的对比损失是双塔对称损失，以及预训练数据规模（WIT-400M）。
+> **存在混淆**：无明显混淆。
+> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#方法流程)
+> **下一题 (Stage 2: 结构回忆)**：在训练时，CLIP 的输入和输出张量以及具体损失函数是如何计算的？在推理 (Inference) 做 zero-shot 分类时，又是如何工作的？
+
+---
+
+### **Stage 2: Structural Recall (结构回忆)**
+
+**User**:
+> 训练输入是 Batch 对图文。把图像输入 Image Encoder (比如 ViT)，文字输入 Text Encoder (比如 Transformer)，各得到一个特征向量。然后做投影映射到相同维度并做 L2 归一化。把两个 Batch 的向量矩阵相乘，计算 logits，代表相似度。
+> 损失函数是对称的 Cross Entropy：按行方向和列方向算两次 Softmax 交叉熵损失，最后求平均。
+> 推理时，把我们要分类的类别填进模板（如 "a photo of a {label}"），通过文本编码器得到一堆文本向量。把测试图像通过图像编码器得到图像向量。算图像向量和所有文本向量的余弦相似度，相似度最大的那个对应的就是预测类别。
+
+**AI 反馈**:
+> **掌握正确**：非常完整！清晰描述了特征提取、线性投影、L2 归一化、余弦相似度计算，以及对称交叉熵损失。准确阐明了 zero-shot 分类的 prompt 模板匹配机制。
+> **遗漏内容**：未明确指出温度参数 $\tau$ 在计算相似度 logits 时起到的缩放作用（即余弦相似度乘上 $e^\tau$）。
+> **存在混淆**：无。
+> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#训练目标或核心公式)
+> **下一题 (Stage 3: 机制理解)**：为什么 CLIP 在对比损失中引入了可学习的温度参数 $\tau$？如果不做 L2 归一化，直接计算两个特征向量的内积作为相似度会发生什么问题？
+
+---
+
+### **Stage 3: Mechanism Understanding (机制理解)**
+
+**User**:
+> 温度参数主要是控制分类概率的尖锐程度的，太高了分类很均匀，太低了分类太极端，所以需要自适应学习。如果不做 L2 归一化，特征向量的模长会影响相似度大小，模型可能会直接优化增大特征向量的模长（范数）来降低损失，而不是去真正优化它们的夹角对齐，这会导致训练非常不稳定。
+
+**AI 反馈**:
+> **掌握正确**：回答非常专业！温度参数 $\tau$ 的确能调节 Softmax 分布熵。而对于 L2 归一化，你准确指出了如果没有归一化，模型倾向于通过暴增模长来降低损失，导致梯度爆炸或坍塌，而无法专注于角度对齐。
+> **遗漏内容**：温度参数在训练初期较小（起平滑作用），随训练收敛自适应变大（起硬分类作用）。
+> **存在混淆**：无。
+> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/evidence-rules.md)
+> **下一题 (Stage 4: 批判与迁移)**：CLIP 在面对涉及“左边/右边”这种空间几何方位，或者“计算图片中有几只猫”这类计数任务时，表现很差。请问其背后的根源是什么？如果你现在的课题是“机器人 3D 空间语言导航”，你会如何改进或补充 CLIP 视觉向量的这种缺陷？
+
+---
+
+### **Stage 4: Criticism & Transfer (批判与迁移)**
+
+**User**:
+> 根源是预训练数据集 WIT-400M 的文本大都是简单标题描述，极少包含空间位置或精准数量，所以对比学习没能学到这些特征。
+> 如果在我的定位/导航课题中，我不能只用 CLIP 全局向量。我可以结合 DINOv2 这类自监督模型，因为它有更强的地方局部特征。或者使用像 DenseCLIP、GLIP 这种能对齐到 bounding box 层次的细粒度模型。甚至使用三维点云特征提取器（如 PointNet）直接补充空间几何特征。
+
+**AI 反馈**:
+> **掌握正确**：深入剖析了数据分布缺陷导致的诱导偏差 (Inductive Bias) 问题。在迁移建议中，合理提出了融合 DINOv2（稠密局部特征）或引入检测级模型（GLIP/DenseCLIP）以及 3D 点云的方案。
+> **遗漏内容**：还可以提到引入基于空间关系合成的对比学习微调（如 NegCLIP）。
+> **存在混淆**：无。
+> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#局限与失效场景)
+
+---
+
+### **复习得分总结 (Review Score Summary)**
+
+| 维度 (Dimension) | 得分 (Score) | 表现分析 (Performance) |
+| --- | --- | --- |
+| 研究问题 | 2/2 | 清晰理解开放类别与以往固定标签的区别。 |
+| 核心思想 | 1.8/2 | 准确还原双塔对比对齐的核心理念，漏掉 WIT-400M 关键词。 |
+| 方法流程 | 1.9/2 | 对公式和推理描述极其扎实，仅漏了温度参数自学习初始细节。 |
+| 实验理解 | 2/2 | 准确理解了 L2 归一化的必要性与温度参数的性质。 |
+| 批判与迁移 | 2/2 | 敏锐地定位了空间/数量缺陷的成因，并给出切实可行的导航课题融合路线。 |
+| **总分 (Total)** | **9.7/10** | **优秀 (Stable/Expert 理解水平)** |
+
+**薄弱点记录 (Weak Points & Action Items)**:
+- 对预训练数据集的具体参数（WIT-400M）记忆稍淡，但不影响核心机制理解。
+- 建议关注温度参数 $\tau$ 的更新策略细节（防止收敛时坍塌）。

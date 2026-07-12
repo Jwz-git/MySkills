@@ -1,0 +1,45 @@
+{
+  "skill_name": "paper-memory",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我把 CLIP 这篇论文整理成 Standard Memory 格式的复习笔记，说明图像和文本是如何进行对比对齐的。",
+      "expected_output": "Standard Memory output matching the template with details of CLIP's dual-encoder symmetric contrastive loss training, WIT-400M dataset, and limitations.",
+      "expectations": [
+        "Output contains YAML frontmatter matching standard-memory template.",
+        "Output includes '一句话记忆' covering research problem, method, and outcome.",
+        "Output contains LaTeX formulations for Symmetric InfoNCE loss with appropriate delimiters.",
+        "Output includes '与其他论文的关系' specifying links to Transformer and ALIGN."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "复习 CLIP 论文，考考我。",
+      "expected_output": "An interactive active recall review prompt starting with Stage 1 (Free Recall): '请不用看笔记，用一句话说明这篇论文解决什么问题，以及核心方法是什么。'",
+      "expectations": [
+        "Prompt initiates active recall without showing the paper summary or answers first.",
+        "Stage 1 prompt is correctly presented to the user."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把 VLM-Loc 和 CLIP、Text2Loc 连接起来，建立它们之间的双向链接，并给出反向链接建议。",
+      "expected_output": "Accurate relationship categories (builds-on, same-task) with Wiki-links and bidirectional backlink suggestions.",
+      "expectations": [
+        "Includes Wiki Links format [[CLIP]] and [[Text2Loc]].",
+        "Uses correct relationship display names such as '建立在……基础上' or '任务相同'.",
+        "Includes explicit backlink suggestions for CLIP and Text2Loc."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "对比 CLIP 和 DINOv2，它们在目标和结构上有什么区别？哪个方法更适合我的 3D 语言导航课题？",
+      "expected_output": "Comprehensive comparison table comparing the two papers across the standard 13 dimensions, cause of differences, selection advice for 3D language navigation, and metrics warning.",
+      "expectations": [
+        "Comparison addresses the 13 dimensions defined in compare-guide.",
+        "Includes the metrics comparison warning (实验指标对比警告).",
+        "Provides research selection guidance recommending DINOv2 for geometry/dense tasks."
+      ]
+    }
+  ]
+}
