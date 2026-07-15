@@ -1,9 +1,5 @@
 ---
-aliases: [CLIP]
-tags: ["paper/vision-language", "method/contrastive-learning", "task/retrieval", "modality/image", "modality/text"]
-status: understood
-last_reviewed: 2026-07-10
-review_count: 3
+tags: ["论文/视觉语言", "方法/对比学习", "任务/检索", "模态/图文"]
 ---
 
 # Learning Transferable Visual Models From Natural Language Supervision (CLIP)

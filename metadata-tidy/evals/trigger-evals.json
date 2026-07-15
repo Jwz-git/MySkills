@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我的 Obsidian 技术库在 ~/Notes/Engineering，帮我把所有 md 的 tags 盘点一下，再把 TODO、todo、待办合并成 status/todo；只改 frontmatter，正文里的 #todo 不动，结果用中文说。",
+    "should_trigger": true
+  },
+  {
+    "query": "先别改文件，只读检查 /Users/me/TechVault 里哪些 API 文档和 runbook 用了重复 aliases、旧的 alias/cssclass 字段或无效 YAML，按问题类型和文件数用中文汇总。",
+    "should_trigger": true
+  },
+  {
+    "query": "Incidents/ 里有 300 篇 2026-*.md 事故记录，有些缺 date 和 severity 属性。按文件名里的合法日期补 frontmatter，遇到非法日期跳过并报告。",
+    "should_trigger": true
+  },
+  {
+    "query": "把 Hardware/Lab 下的硬件实验笔记从单数旧属性 tag、alias、cssclass 迁移到 tags、aliases、cssclasses；先检查同一文档里新旧字段同时存在的碰撞，别覆盖。",
+    "should_trigger": true
+  },
+  {
+    "query": "机器学习实验笔记的 framework 属性混着 pytorch、PyTorch、torch，accelerator 又混着 A100 和 NVIDIA-A100。先统计频次，再按我给的映射统一并保证重复运行不再产生 diff。",
+    "should_trigger": true
+  },
+  {
+    "query": "给 Runbooks/ 下没有 YAML 头的 Markdown 新增 tags、aliases 和 owner 模板；已有 frontmatter 的文件不要整体重排，命令示例和正文必须保持。",
+    "should_trigger": true
+  },
+  {
+    "query": "后端技术笔记的 Tags view 同时出现 Python 和 python。查清是哪些 frontmatter 造成的，按大小写不敏感语义去重，但先让我选最终展示拼写。",
+    "should_trigger": true
+  },
+  {
+    "query": "审计 docs/architecture/**/*.md 顶部 YAML：找重复顶层键、未闭合边界、tags 标量和含空格或全数字 tag。只给中文报告，不要自动修。",
+    "should_trigger": true
+  },
+  {
+    "query": "这批 API 站点的 Hugo Markdown front matter 里 author 有时是字符串、有时是列表。按站点 schema 统一并保留代码块；先确认项目是否接受 ... 结束符。",
+    "should_trigger": true
+  },
+  {
+    "query": "把项目文档正文开头散落的 #project/backend 迁移到每篇笔记的 tags 属性并去重；这是正文到 frontmatter 的迁移，迁移完删除原位置标签。",
+    "should_trigger": true
+  },
+  {
+    "query": "把 Vault/Projects 下正文中的 #todo 全部替换成 #status/todo，YAML 属性完全不要碰。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 Architecture/ 下的 Markdown 文件按 H1 标题重命名，并更新库内所有 [[wikilinks]]，frontmatter 不需要改。",
+    "should_trigger": false
+  },
+  {
+    "query": "整理这批论文笔记：补原文 URL，统一 paper/method 标签，并改成问题、方法、实验、结论、局限五段结构。",
+    "should_trigger": false
+  },
+  {
+    "query": "总结这篇 NeurIPS 论文，做成 Obsidian 论文卡片，再给我 10 道主动回忆题。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我修 GitHub Actions 的 workflow.yml，matrix 和 permissions 写错了；这是仓库配置 YAML，不是 Markdown frontmatter。",
+    "should_trigger": false
+  },
+  {
+    "query": "批量把 docs 里的一级标题从中文改成英文，frontmatter 保持原样。",
+    "should_trigger": false
+  },
+  {
+    "query": "更新 package.json 的 name、keywords 和 repository metadata，然后跑 npm test。",
+    "should_trigger": false
+  },
+  {
+    "query": "整理 Travel/ 下两百篇旅行随笔的 frontmatter tags，按国家、心情和同行人分类，正文别动。",
+    "should_trigger": false
+  },
+  {
+    "query": "给 2026 年的个人日记批量补 date、weather、mood 属性，再统一生活记录的 aliases。",
+    "should_trigger": false
+  },
+  {
+    "query": "只打开 Notes/api-client.md，把 frontmatter 的 title 从 API Client 改成 HTTP Client；没有批量、审计或 schema 需求。",
+    "should_trigger": false
+  }
+]

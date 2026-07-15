@@ -2,7 +2,6 @@
 title: 
 date: 
 tags: []
-aliases: []
 ---
 
 # [论文简称] - Flash Card

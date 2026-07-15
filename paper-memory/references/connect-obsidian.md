@@ -56,7 +56,7 @@ MOCs/
 ```
 
 ### 4.2 模板结构
-MOC 文件应遵循 [templates/moc-template.md](file:///Users/jwz/.agents/skills/paper-memory/templates/moc-template.md) 的布局，必须包含：
+MOC 文件应遵循 [templates/moc-template.md](../templates/moc-template.md) 的布局，必须包含：
 1. **标题**：领域/主题名称。
 2. **基础表示与基线**：核心理论/模型基础（使用 Wiki Link）。
 3. **核心工作与演进**：按子主题分组的文献列表。

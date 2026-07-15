@@ -6,7 +6,6 @@
 """
 
 import sys
-import os
 import numpy as np
 from PIL import Image
 from pathlib import Path
@@ -188,10 +187,13 @@ def split_image(input_path, output_dir=None, max_height=1000, overlap=150, heigh
     split_points = find_safe_split_points(img_array, target_height=max_height, overlap=overlap)
 
     if not split_points:
-        print("未找到合适的裁剪点，返回原图")
+        print("未找到合适的裁剪点，返回原图", file=sys.stderr)
         return [str(input_path)]
 
-    print(f"图片高度: {height}px，将在以下位置裁剪: {split_points}")
+    print(
+        f"图片高度: {height}px，将在以下位置裁剪: {split_points}",
+        file=sys.stderr,
+    )
 
     # 执行裁剪
     segments = []
@@ -205,7 +207,10 @@ def split_image(input_path, output_dir=None, max_height=1000, overlap=150, heigh
         segment.save(output_path, "PNG")
         segments.append(str(output_path))
 
-        print(f"片段 {i+1}: y={start_y} 到 {min(end_y + overlap, height)}，保存至 {output_path}")
+        print(
+            f"片段 {i+1}: y={start_y} 到 {min(end_y + overlap, height)}，保存至 {output_path}",
+            file=sys.stderr,
+        )
 
         start_y = end_y
 
@@ -215,9 +220,12 @@ def split_image(input_path, output_dir=None, max_height=1000, overlap=150, heigh
         output_path = output_dir / f"{input_path.stem}_part{len(split_points)+1:02d}.png"
         segment.save(output_path, "PNG")
         segments.append(str(output_path))
-        print(f"片段 {len(split_points)+1}: y={start_y} 到 {height}，保存至 {output_path}")
+        print(
+            f"片段 {len(split_points)+1}: y={start_y} 到 {height}，保存至 {output_path}",
+            file=sys.stderr,
+        )
 
-    print(f"\n共生成 {len(segments)} 个片段")
+    print(f"共生成 {len(segments)} 个片段", file=sys.stderr)
     return segments
 
 

@@ -2,7 +2,6 @@
 title: 
 date: 
 tags: []
-aliases: []
 ---
 
 # 一句话记忆

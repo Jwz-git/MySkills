@@ -1,137 +1,190 @@
 #!/usr/bin/env python3
-"""
-图片预处理入口脚本 - 用于 img2md skill
-自动检测图片尺寸，决定直接读取还是裁剪，输出待处理的文件列表。
-Agent 只需运行此脚本，然后读取输出的文件列表即可。
-"""
+"""为视觉读取准备图片，并在标准输出返回单个 JSON 对象。"""
 
-import sys
-import os
 import json
-import subprocess
+import sys
 from pathlib import Path
 
-# ─── 自动安装依赖 ───────────────────────────────────────
-def _ensure_dependencies():
-    """检查并自动安装缺失的依赖库"""
-    missing = []
+
+HEIGHT_THRESHOLD = 1500
+TARGET_HEIGHT = 1000
+OVERLAP = 150
+
+
+def _dependency_error(exc):
+    missing = getattr(exc, "name", "Pillow/NumPy")
+    return RuntimeError(
+        f"缺少 Python 依赖 {missing}。请运行: "
+        f"{sys.executable} -m pip install Pillow numpy"
+    )
+
+
+def _load_pillow():
     try:
         from PIL import Image
-    except ImportError:
-        missing.append("Pillow")
+    except ImportError as exc:
+        raise _dependency_error(exc) from exc
+    return Image
+
+
+def _load_split_image():
+    scripts_dir = Path(__file__).resolve().parent
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
     try:
-        import numpy as np
-    except ImportError:
-        missing.append("numpy")
-
-    if missing:
-        print(f"[img2md] 正在安装缺失依赖: {', '.join(missing)} ...", file=sys.stderr)
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install"] + missing + ["--break-system-packages", "-q"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        print(f"[img2md] 依赖安装完成", file=sys.stderr)
-
-_ensure_dependencies()
-
-from PIL import Image
-
-# ─── 导入裁剪模块（使用绝对路径，避免相对导入问题） ────
-_SCRIPTS_DIR = Path(__file__).resolve().parent
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
-from split_image import split_image
-
-
-# ─── 配置 ───────────────────────────────────────────────
-HEIGHT_THRESHOLD = 1500   # 高度超过此值则裁剪
-TARGET_HEIGHT = 1000      # 每个片段的目标高度
-OVERLAP = 150             # 片段间重叠像素
-# ────────────────────────────────────────────────────────
+        from split_image import split_image
+    except ImportError as exc:
+        raise _dependency_error(exc) from exc
+    return split_image
 
 
 def get_image_info(image_path):
-    """获取图片尺寸信息"""
-    img = Image.open(image_path)
-    width, height = img.size
-    return {"width": width, "height": height, "format": img.format, "mode": img.mode}
+    """返回尺寸、格式、颜色模式和帧数。"""
+    Image = _load_pillow()
+    with Image.open(image_path) as img:
+        return {
+            "width": img.width,
+            "height": img.height,
+            "format": img.format,
+            "mode": img.mode,
+            "frame_count": getattr(img, "n_frames", 1),
+            "is_animated": bool(getattr(img, "is_animated", False)),
+        }
+
+
+def _prepare_single(input_path, output_dir=None):
+    """准备单帧图片，并返回供上层聚合的结果。"""
+    info = get_image_info(input_path)
+    if info["height"] <= HEIGHT_THRESHOLD:
+        return {
+            "needs_split": False,
+            "files": [str(Path(input_path).resolve())],
+            "output_dir": None,
+        }
+
+    split_image = _load_split_image()
+    input_path = Path(input_path).resolve()
+    split_dir = (
+        Path(output_dir).resolve()
+        if output_dir is not None
+        else input_path.parent / f"{input_path.stem}_split"
+    )
+    files = split_image(
+        str(input_path),
+        str(split_dir),
+        max_height=TARGET_HEIGHT,
+        overlap=OVERLAP,
+        height_threshold=HEIGHT_THRESHOLD,
+    )
+    return {"needs_split": len(files) > 1, "files": files, "output_dir": str(split_dir)}
+
+
+def _extract_tiff_pages(input_path, output_dir):
+    """把多页 TIFF 展开为稳定、可独立读取的 PNG 页面。"""
+    Image = _load_pillow()
+    input_path = Path(input_path).resolve()
+    pages_dir = Path(output_dir).resolve()
+    pages_dir.mkdir(parents=True, exist_ok=True)
+
+    pages = []
+    with Image.open(input_path) as img:
+        for index in range(img.n_frames):
+            img.seek(index)
+            page_path = pages_dir / f"{input_path.stem}_page{index + 1:03d}.png"
+            img.copy().save(page_path, "PNG")
+            pages.append(page_path)
+    return pages
+
+
+def _extract_gif_first_frame(input_path, output_dir):
+    """把动画 GIF 的第一帧固化为 PNG，避免读取工具选择其他帧。"""
+    Image = _load_pillow()
+    input_path = Path(input_path).resolve()
+    frames_dir = Path(output_dir).resolve()
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    frame_path = frames_dir / f"{input_path.stem}_frame001.png"
+    with Image.open(input_path) as img:
+        img.seek(0)
+        img.copy().convert("RGBA").save(frame_path, "PNG")
+    return frame_path
 
 
 def prepare(input_path, output_dir=None):
-    """
-    主入口：检测图片 → 决定是否裁剪 → 输出待处理文件列表
-
-    Args:
-        input_path: 输入图片路径
-        output_dir: 输出目录（默认为图片所在目录下的子文件夹）
-
-    Returns:
-        dict: 包含图片信息和待处理文件列表
-    """
+    """检测帧数和尺寸，返回按阅读顺序排列的文件列表。"""
     input_path = Path(input_path).resolve()
+    if not input_path.is_file():
+        raise FileNotFoundError(f"图片不存在或不是文件: {input_path}")
 
-    if not input_path.exists():
-        result = {"error": f"图片不存在: {input_path}"}
-        print(json.dumps(result, ensure_ascii=False))
-        sys.exit(1)
-
-    # 1. 获取图片信息
     info = get_image_info(input_path)
-    width, height = info["width"], info["height"]
+    notes = []
+    files_to_read = []
+    generated_dirs = []
+    needs_split = False
 
-    # 2. 判断是否需要裁剪
-    needs_split = height > HEIGHT_THRESHOLD
-
-    if not needs_split:
-        result = {
-            "needs_split": False,
-            "image_info": info,
-            "message": f"图片高度 {height}px，无需裁剪，直接读取即可",
-            "files_to_read": [str(input_path)]
-        }
-    else:
-        # 3. 执行裁剪（调用 split_image.py）
-        if output_dir is None:
-            output_dir = str(input_path.parent / f"{input_path.stem}_split")
-
-        segments = split_image(
-            str(input_path),
-            output_dir,
-            max_height=TARGET_HEIGHT,
-            overlap=OVERLAP,
-            height_threshold=HEIGHT_THRESHOLD
+    if info["format"] == "TIFF" and info["frame_count"] > 1:
+        pages_root = (
+            Path(output_dir).resolve()
+            if output_dir is not None
+            else input_path.parent / f"{input_path.stem}_pages"
         )
+        pages = _extract_tiff_pages(input_path, pages_root)
+        generated_dirs.append(str(pages_root))
+        notes.append(f"多页 TIFF 已按顺序展开为 {len(pages)} 页。")
+        for page in pages:
+            page_result = _prepare_single(page, pages_root / f"{page.stem}_split")
+            files_to_read.extend(page_result["files"])
+            needs_split = needs_split or page_result["needs_split"]
+            if page_result["output_dir"]:
+                generated_dirs.append(page_result["output_dir"])
+    elif info["format"] == "GIF" and info["frame_count"] > 1:
+        frames_root = (
+            Path(output_dir).resolve()
+            if output_dir is not None
+            else input_path.parent / f"{input_path.stem}_frames"
+        )
+        first_frame = _extract_gif_first_frame(input_path, frames_root)
+        generated_dirs.append(str(frames_root))
+        single_result = _prepare_single(first_frame, frames_root / "frame001_split")
+        files_to_read.extend(single_result["files"])
+        needs_split = single_result["needs_split"]
+        if single_result["output_dir"]:
+            generated_dirs.append(single_result["output_dir"])
+        notes.append(
+            f"动画 GIF 共 {info['frame_count']} 帧；默认只读取第一帧。"
+        )
+    else:
+        single_result = _prepare_single(input_path, output_dir)
+        files_to_read.extend(single_result["files"])
+        needs_split = single_result["needs_split"]
+        if single_result["output_dir"]:
+            generated_dirs.append(single_result["output_dir"])
 
-        result = {
-            "needs_split": True,
-            "image_info": info,
-            "message": f"图片高度 {height}px，已裁剪为 {len(segments)} 个片段",
-            "split_output_dir": output_dir,
-            "files_to_read": segments
-        }
-
-    # 输出 JSON 结果
+    result = {
+        "needs_split": needs_split,
+        "image_info": info,
+        "files_to_read": files_to_read,
+        "generated_dirs": list(dict.fromkeys(generated_dirs)),
+        "notes": notes,
+    }
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return result
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python prepare_image.py <图片路径> [输出目录]")
-        print()
-        print("功能: 自动检测图片尺寸，判断是否需要裁剪，输出待处理的文件列表。")
-        print()
-        print("输出为 JSON 格式，包含:")
-        print("  - needs_split: 是否进行了裁剪")
-        print("  - image_info:  图片尺寸信息")
-        print("  - files_to_read: 待读取的文件路径列表")
-        sys.exit(1)
+    if len(sys.argv) not in (2, 3):
+        print(
+            "用法: python3 prepare_image.py <图片路径> [临时输出目录]",
+            file=sys.stderr,
+        )
+        return 2
 
-    image_path = sys.argv[1]
-    out_dir = sys.argv[2] if len(sys.argv) > 2 else None
-    prepare(image_path, out_dir)
+    try:
+        prepare(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
+    except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False))
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

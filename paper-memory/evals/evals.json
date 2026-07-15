@@ -7,6 +7,7 @@
       "expected_output": "Standard Memory output matching the template with details of CLIP's dual-encoder symmetric contrastive loss training, WIT-400M dataset, and limitations.",
       "expectations": [
         "Output contains YAML frontmatter matching standard-memory template.",
+        "Frontmatter does not contain an aliases field.",
         "Output includes '一句话记忆' covering research problem, method, and outcome.",
         "Output contains LaTeX formulations for Symmetric InfoNCE loss with appropriate delimiters.",
         "Output includes '与其他论文的关系' specifying links to Transformer and ALIGN."
@@ -39,6 +40,20 @@
         "Comparison addresses the 13 dimensions defined in compare-guide.",
         "Includes the metrics comparison warning (实验指标对比警告).",
         "Provides research selection guidance recommending DINOv2 for geometry/dense tasks."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "整理 /vault/papers 下论文笔记的 tags，尽量使用中文。当前同时存在 paper/vision-language、论文/多模态、论文/定位和任务/定位，以及分散在方法/表征学习和任务/表征学习下的同义标签。只改 frontmatter。",
+      "expected_output": "先盘点全目录标签及频次，再给出按论文、方法、任务、模态四个中文维度组织的语义合并方案；消除英文命名空间、文件内重复和跨命名空间同叶标签，同时保留定位、地理定位、地点识别等相关但不等价的任务。",
+      "expectations": [
+        "修改前汇总全部 frontmatter 标签，而不是逐文件盲目替换。",
+        "统一使用论文、方法、任务、模态四个中文命名空间，允许 Transformer、BEV、LoRA 等专名保留英文。",
+        "不会在同一篇笔记中同时保留论文/定位和任务/定位；论文维度改用更宽的研究领域。",
+        "区分真正同义词与相关但不等价的定位、地理定位、地点识别。",
+        "删除已有 aliases 字段，且不在新笔记中创建 aliases。",
+        "只修改 frontmatter，不为纯元数据调整追加正文理解更新记录。",
+        "修改后检查旧命名空间、文件内重复和跨命名空间同叶标签，并报告结果。"
       ]
     }
   ]

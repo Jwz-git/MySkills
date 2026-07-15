@@ -12,12 +12,12 @@
 - **方法流程**
 - **主要局限**
 
-使用模板：[templates/flash-card.md](file:///Users/jwz/.agents/skills/paper-memory/templates/flash-card.md)
+使用模板：[templates/flash-card.md](../templates/flash-card.md)
 
 ### 1.2 Standard Memory（默认）
 适合长期保存到 Obsidian 的标准笔记格式。
 
-使用模板：[templates/standard-memory.md](file:///Users/jwz/.agents/skills/paper-memory/templates/standard-memory.md)
+使用模板：[templates/standard-memory.md](../templates/standard-memory.md)
 
 ### 1.3 Deep Memory
 仅当用户明确要求深度分析、详细公式或代码映射时使用。在 Standard Memory 基础上增加：
@@ -27,7 +27,7 @@
 - 复现风险与超参数敏感度分析
 - 深度关系分析
 
-使用模板：[templates/deep-memory.md](file:///Users/jwz/.agents/skills/paper-memory/templates/deep-memory.md)
+使用模板：[templates/deep-memory.md](../templates/deep-memory.md)
 
 ---
 
@@ -105,29 +105,19 @@
 ## 3. Frontmatter 与标签生成规则
 
 ### 3.1 Frontmatter 填写规范
-为了保持笔记整洁并与现有知识库样式对齐，Frontmatter 应保持极简，仅包含以下四个基础属性：
+为了保持笔记整洁并与现有知识库样式对齐，Frontmatter 应保持极简，仅包含以下三个基础属性：
 - `title`：论文的完整标题。
 - `date`：论文发表的年份或具体日期（YYYY 或 YYYY-MM-DD）。
 - `tags`：分类标签列表（使用下方的推荐命名空间标签）。
-- `aliases`：简称、常用缩写列表（如 `[CLIP]` 或 `[CLIP, Contrastive Language-Image Pre-training]`），供 Obsidian 自动双向链接识别。
+- 不使用 `aliases`。论文简称由简洁文件名和正文 Wiki 链接表达，避免同一简称解析到多个文件。
 - 注意：所有其他冗余属性（如 `status`、`review_count` 等）均无需塞入 Frontmatter，以保持笔记格式极简和统一。
 
 ### 3.2 标签规范
 标签用于宽分类，不应取代双向链接。
 
-推荐标签命名空间：
-- `paper/vision-language`、`paper/3d-vision`、`paper/localization`
-- `method/contrastive-learning`、`method/self-distillation`
-- `task/retrieval`、`task/localization`
-- `modality/bev`、`modality/point-cloud`
+默认使用中文命名空间：`论文/...`、`方法/...`、`任务/...`、`模态/...`。一篇论文通常保留 3–6 个有区分度的标签，不为了凑数量加入宽泛标签；Transformer、BEV、LoRA 等通用专名可保留英文。
 
-控制标签数量。一篇论文通常保留：
-- 一个 `paper/...` 领域标签
-- 一到两个 `method/...` 标签
-- 一个 `task/...` 标签
-- 必要的 `modality/...` 标签
-
-不要为论文中的每个关键词都创建标签。总数控制在 5-7 个以内。
+生成标签前必须阅读并执行 [tag-taxonomy.md](tag-taxonomy.md)，尤其检查同义标签、跨命名空间同叶标签，以及领域与任务的重复表达。
 
 ### 3.3 文件命名
 默认使用短名称：`CLIP.md`、`DINOv2.md`、`Text2Loc.md`。

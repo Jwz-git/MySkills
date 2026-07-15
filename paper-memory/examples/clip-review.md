@@ -16,7 +16,7 @@ This is a demonstration transcript of an interactive active recall review sessio
 > **掌握正确**：准确指出了克服固定类别限制（开放世界分类）的目标，指出了互联网图文对数据集和对比对齐方法，以及实现了 zero-shot 分类。
 > **遗漏内容**：未提及具体的对比损失是双塔对称损失，以及预训练数据规模（WIT-400M）。
 > **存在混淆**：无明显混淆。
-> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#方法流程)
+> **建议复习**：[clip-memory.md](clip-memory.md#方法流程)
 > **下一题 (Stage 2: 结构回忆)**：在训练时，CLIP 的输入和输出张量以及具体损失函数是如何计算的？在推理 (Inference) 做 zero-shot 分类时，又是如何工作的？
 
 ---
@@ -32,7 +32,7 @@ This is a demonstration transcript of an interactive active recall review sessio
 > **掌握正确**：非常完整！清晰描述了特征提取、线性投影、L2 归一化、余弦相似度计算，以及对称交叉熵损失。准确阐明了 zero-shot 分类的 prompt 模板匹配机制。
 > **遗漏内容**：未明确指出温度参数 $\tau$ 在计算相似度 logits 时起到的缩放作用（即余弦相似度乘上 $e^\tau$）。
 > **存在混淆**：无。
-> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#训练目标或核心公式)
+> **建议复习**：[clip-memory.md](clip-memory.md#训练目标或核心公式)
 > **下一题 (Stage 3: 机制理解)**：为什么 CLIP 在对比损失中引入了可学习的温度参数 $\tau$？如果不做 L2 归一化，直接计算两个特征向量的内积作为相似度会发生什么问题？
 
 ---
@@ -46,7 +46,7 @@ This is a demonstration transcript of an interactive active recall review sessio
 > **掌握正确**：回答非常专业！温度参数 $\tau$ 的确能调节 Softmax 分布熵。而对于 L2 归一化，你准确指出了如果没有归一化，模型倾向于通过暴增模长来降低损失，导致梯度爆炸或坍塌，而无法专注于角度对齐。
 > **遗漏内容**：温度参数在训练初期较小（起平滑作用），随训练收敛自适应变大（起硬分类作用）。
 > **存在混淆**：无。
-> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/evidence-rules.md)
+> **建议复习**：[clip-memory.md](clip-memory.md#训练目标或核心公式)
 > **下一题 (Stage 4: 批判与迁移)**：CLIP 在面对涉及“左边/右边”这种空间几何方位，或者“计算图片中有几只猫”这类计数任务时，表现很差。请问其背后的根源是什么？如果你现在的课题是“机器人 3D 空间语言导航”，你会如何改进或补充 CLIP 视觉向量的这种缺陷？
 
 ---
@@ -61,7 +61,7 @@ This is a demonstration transcript of an interactive active recall review sessio
 > **掌握正确**：深入剖析了数据分布缺陷导致的诱导偏差 (Inductive Bias) 问题。在迁移建议中，合理提出了融合 DINOv2（稠密局部特征）或引入检测级模型（GLIP/DenseCLIP）以及 3D 点云的方案。
 > **遗漏内容**：还可以提到引入基于空间关系合成的对比学习微调（如 NegCLIP）。
 > **存在混淆**：无。
-> **建议复习**：[clip-memory.md](file:///Users/jwz/.agents/skills/paper-memory/examples/clip-memory.md#局限与失效场景)
+> **建议复习**：[clip-memory.md](clip-memory.md#局限与失效场景)
 
 ---
 

@@ -1,0 +1,65 @@
+{
+  "skill_name": "metadata-tidy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请处理我提供的 technical-vault 技术笔记副本，只改 frontmatter。把“编程”+“Python”合并为 software/python，把“运维”+“Kubernetes”合并为 ops/kubernetes；同一 tags 列表去重。不要改正文，也不要统一 YAML 风格。规则和范围都已经明确，请直接执行并用中文报告验证结果。",
+      "expected_output": "输出修改后的技术笔记副本和简体中文验证报告；笔记应与 evals/expected/technical-vault 中的 golden files 一致，并报告结构、语义、范围和幂等检查。未授权的 aliases 标量异常只报告，不顺手修复。",
+      "files": [
+        "evals/files/technical-vault/api-client.md",
+        "evals/files/technical-vault/kubernetes-runbook.md"
+      ],
+      "expectations": [
+        "修改后的两个文件与 evals/expected/technical-vault 下的同名 golden files 逐字节一致",
+        "api-client.md 的 tags 语义值最终仅包含 software/python 和原有非目标标签 note/core",
+        "kubernetes-runbook.md 的 tags 语义值最终仅包含 ops/kubernetes，重复项被稳定去除",
+        "块列表和内联列表各自保持原有风格，未重排无关字段",
+        "识别 kubernetes-runbook.md 的 aliases 标量为类型异常，但不修改这个未授权字段",
+        "规则明确时直接执行，不要求用户再次确认",
+        "使用简体中文报告结构、语义、正文、范围和幂等校验结果"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "只读检查我提供的 problem-vault 技术文档，使用中文告诉我 frontmatter 和 aliases 有哪些问题。不要修改任何文件。",
+      "expected_output": "简体中文只读报告应区分合法但可能造成候选冲突的重复 alias、已弃用属性名、重复键、非标准结束符、非法/大小写重复 tag、frontmatter 边界损坏、无 frontmatter 和正文标签，不把 alias 误当成指向文件的链接。",
+      "files": [
+        "evals/files/problem-vault/alias-a.md",
+        "evals/files/problem-vault/alias-b.md",
+        "evals/files/problem-vault/duplicate-key.md",
+        "evals/files/problem-vault/dot-end.md",
+        "evals/files/problem-vault/tag-problems.md",
+        "evals/files/problem-vault/unclosed.md",
+        "evals/files/problem-vault/body-only.md"
+      ],
+      "expectations": [
+        "不修改任何输入文件，也不创建修复后的副本",
+        "使用中文报告 alias-a.md 与 alias-b.md 共用 alias“客户端指南”可能产生多个自动补全候选，同时明确重复 alias 合法且显式目标链接不受影响",
+        "把 alias-a.md 的 cssclass 识别为已弃用字段并只提出迁移候选",
+        "在普通 YAML 加载前识别 duplicate-key.md 的重复顶层 title 键",
+        "在 Obsidian 模式下把 dot-end.md 的 ... 识别为非标准结束符或边界损坏",
+        "报告 tag-problems.md 中大小写语义重复、全数字 tag 和含空格 tag；不擅自选择新的展示大小写或猜测修复",
+        "把 unclosed.md 识别为 frontmatter 边界损坏，而不是把全文解析成 YAML",
+        "把 body-only.md 识别为无 frontmatter，并说明正文 #tag 不在默认处理范围",
+        "不使用“alias 指向不存在文件”或“孤立 alias 链接”作为判断依据"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把我提供的 technical-vault 里 API 开发和 Kubernetes 运维笔记的中文标签整理得专业一点，最好层级清楚。先用中文给我看方案，暂时不要改文件。",
+      "expected_output": "先用简体中文盘点技术标签和使用频次，提出完整映射与影响范围；标签语言和分类属于用户决策，不提前写入文件。",
+      "files": [
+        "evals/files/technical-vault/api-client.md",
+        "evals/files/technical-vault/kubernetes-runbook.md"
+      ],
+      "expectations": [
+        "不修改输入文件",
+        "区分标签出现次数和受影响文件数",
+        "给出可逐项复核的旧值到新值映射及合并影响",
+        "在用户确认语言和层级方案前不执行主观分类",
+        "不自动修改正文标签、文件名、aliases 或其他未授权字段",
+        "所有面向用户的说明使用简体中文，路径、字段名和属性值保持原文"
+      ]
+    }
+  ]
+}
