@@ -1,6 +1,6 @@
 # 模式路由指南
 
-根据用户请求分析其意图，将请求映射到正确的操作模式（`compress`、`review`、`connect`、`compare`、`update`）。
+根据用户请求分析其意图，将请求映射到正确的内容模式（`compress`、`review`、`connect`、`compare`、`update`）。图片附件处理是横切子流程，可单独执行，也可与 `compress` 或 `update` 组合。
 
 ## 1. 触发模式
 
@@ -50,6 +50,18 @@
   - 根据实验结果修改论文笔记
   - Add update log to CLIP note
 
+### attachment（图片附件子流程）
+当用户希望提取论文图表、修复图片链接、转换图片嵌入语法或迁移论文图片时，加载 [attachment-guide.md](attachment-guide.md)。
+
+- **触发示例**：
+  - 把论文架构图裁剪出来并插入笔记
+  - 将论文图片改成标准 Markdown 链接
+  - 按 Custom Attachment Location 整理论文图片
+  - 把已引用图片迁移到每篇笔记自己的 assets 目录
+  - 检查论文笔记有没有断裂的图片链接
+
+如果请求只涉及图片文件和链接，不改论文事实、理解或正文语义，则只执行 attachment 子流程，不追加“理解更新记录”。
+
 ---
 
 ## 2. 多模式冲突解决
@@ -59,4 +71,6 @@
 1. **顺序执行**：如果用户说"先压缩论文 X，再和 Y 对比"，先执行 `compress`，再执行 `compare`。
 2. **compress + connect**：如果用户说"压缩这篇新论文并和 CLIP 关联起来"，路由到 `compress`，但确保「与其他论文的关系」章节完整填写，并给出反向链接建议。
 3. **compare + connect**：如果用户说"对比 CLIP 和 DINOv2 并在我的 Obsidian 图谱里连接起来"，先执行 `compare`，再输出双向链接建议。
-4. **意图不明时询问**：如果意图完全无法判断，列出检测到的可能模式并请用户选择。
+4. **compress + attachment**：生成新笔记时，在内容结构完成后提取核心图、写入笔记同级附件目录并验证标准 Markdown 链接。
+5. **update + attachment**：正文理解和图片都变化时，分别执行内容更新规则与附件规则；仅附件路径变化不属于理解更新。
+6. **意图不明时询问**：如果意图完全无法判断，列出检测到的可能模式并请用户选择。

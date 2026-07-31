@@ -1,0 +1,4 @@
+interface:
+  display_name: "知识库问答与沉淀"
+  short_description: "优先检索当前知识库，补全可信答案并按现有目录与格式安全归档"
+  default_prompt: "使用 $knowledge-curator 从当前目录的知识库回答问题，并在必要时补充和归档可靠的新信息。"

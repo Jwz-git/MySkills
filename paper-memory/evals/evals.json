@@ -10,6 +10,7 @@
         "Frontmatter does not contain an aliases field.",
         "Output includes '一句话记忆' covering research problem, method, and outcome.",
         "Output contains LaTeX formulations for Symmetric InfoNCE loss with appropriate delimiters.",
+        "Any local image uses standard Markdown syntax and a note-local relative path such as ./assets/CLIP/fig1_overview.png, not an Obsidian image embed or a vault-root images directory.",
         "Output includes '与其他论文的关系' specifying links to Transformer and ALIGN."
       ]
     },
@@ -54,6 +55,32 @@
         "删除已有 aliases 字段，且不在新笔记中创建 aliases。",
         "只修改 frontmatter，不为纯元数据调整追加正文理解更新记录。",
         "修改后检查旧命名空间、文件内重复和跨命名空间同叶标签，并报告结果。"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "把 /vault/科研/论文/imgs 里已经被论文笔记引用的图片迁移到每篇笔记自己的附件目录。只处理图片，保留 PDF 和未引用图片；链接统一改成标准 Markdown。Vault 使用 Custom Attachment Location，attachmentFolderPath 是 ./assets/${noteFileName}。",
+      "expected_output": "先盘点图片引用关系，再把只属于单篇笔记的已引用图片移动到该笔记同级的 assets/<笔记名>/，更新为标准 Markdown 相对路径，并验证无断链；共享、未引用和非图片附件保持不变并单独报告。",
+      "expectations": [
+        "正确解释 ./assets/${noteFileName} 相对于笔记目录，而不是 Vault 根目录。",
+        "只自动迁移已引用且仅属于一篇笔记的图片。",
+        "共享图片、未引用图片和 PDF 不会被静默移动或删除。",
+        "图片引用使用 ![说明](./assets/<笔记名>/<文件名>)，不使用 ![[...]]。",
+        "移动前检查目标冲突，移动后验证所有本地图片链接存在且位于对应笔记附件目录。",
+        "交付报告包含移动图片数、修改笔记数、图片引用数和保留例外。"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "从 /vault/论文原件/Text2Loc.pdf 中提取总体架构图，放进 /vault/科研/论文/memory/Text2Loc.md。PDF 里的图是矢量图，请适当裁剪后插入笔记。",
+      "expected_output": "渲染包含总体架构图的页面并裁剪核心图区域；去除页眉、页脚、页码、正文和大块空白，同时保留完整子图、图例、坐标轴、标注及必要图题。图片写入笔记同级 assets/Text2Loc/，以标准 Markdown 相对路径引用，并在原始分辨率下视觉复核。",
+      "expectations": [
+        "不会只使用 PDF 图片对象提取而遗漏矢量流程图；必要时以 scale=3 或更高渲染页面。",
+        "裁剪去除无关页面内容和大块空白，但不切掉子图、图例、坐标轴、箭头、文字标注或必要图题。",
+        "裁剪结果保留少量安全边距，并经过原始分辨率视觉复核。",
+        "图片保存到 /vault/科研/论文/memory/assets/Text2Loc/。",
+        "笔记使用 ![说明](./assets/Text2Loc/<文件名>)，不使用 ![[...]]。",
+        "不会移动 PDF 原文，也不会删除任务开始前已有的未引用图片。"
       ]
     }
   ]

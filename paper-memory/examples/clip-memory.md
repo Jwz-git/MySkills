@@ -29,9 +29,9 @@ CLIP 通过在大规模互联网图文对数据集 (WIT-400M) 上，使用对称
 
 # 方法流程
 
-![CLIP 训练与零样本分类流程图](images/CLIP/pipeline.png)
+![CLIP 训练与零样本分类流程图](./assets/CLIP/pipeline.png)
 <!-- 
-注：论文原图已保存在本地 Obsidian 库中：`images/CLIP/pipeline.png`。
+注：论文原图保存在当前笔记同级目录：`./assets/CLIP/pipeline.png`。
 对于双塔流程，其计算通路简述如下：
 1. 图像与文本分别经 Image/Text Encoder 提取特征 [B, D_i] 和 [B, D_t]。
 2. 经线性投影 W_i, W_t 映射至共享维度 [B, D_e] 并执行 L2 归一化。
