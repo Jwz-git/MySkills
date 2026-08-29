@@ -1,10 +1,10 @@
 # 标签分类与语义去重规范
 
-在创建论文笔记、更新 Frontmatter 或批量整理论文库标签时使用本规范。目标不是逐字翻译旧标签，而是建立可筛选、低冗余、语义边界稳定的标签体系。
+仅当 profile 采用本 Skill 推荐标签体系，或用户明确要求设计/整理标签时使用本规范。已有知识库 taxonomy 优先；目标不是逐字翻译旧标签，而是建立可筛选、低冗余、语义边界稳定的标签体系。
 
 ## 1. 默认语言与命名空间
 
-默认使用中文四维命名空间：
+推荐的中文四维命名空间如下；它不是跨资料库的强制默认值：
 
 | 命名空间 | 回答的问题 | 适合的值 | 不应放入 |
 | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Text2Loc 不再额外添加 `论文/定位`；PointNet 不使用过宽的 `方�
 批量修改后运行：
 
 ```bash
-python scripts/audit_tags.py /path/to/paper-notes --strict-cross-namespace
+python3 scripts/audit_tags.py /path/to/paper-notes --strict-cross-namespace
 ```
 
 完成标准：
@@ -94,7 +94,7 @@ python scripts/audit_tags.py /path/to/paper-notes --strict-cross-namespace
 - 同一文件内没有重复标签。
 - 不再残留英文命名空间。
 - 没有未经解释的跨命名空间同叶标签。
-- Frontmatter 中不存在 `aliases`。
+- 未删除 profile 要求保留的其他元数据字段。
 - 正文、标题和文件名未因标签整理被误改。
 - 汇总修改文件数、标签总数、唯一标签数及旧值残留检查结果。
 

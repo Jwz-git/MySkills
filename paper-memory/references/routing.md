@@ -5,7 +5,7 @@
 ## 1. 触发模式
 
 ### compress（压缩）
-当用户希望将论文整理、总结、压缩为记忆卡片或 Obsidian 笔记时触发。
+当用户希望将论文整理、总结、压缩为记忆卡片或长期 Memory 时触发。
 - **触发示例**：
   - 帮我整理成复习笔记
   - 生成论文记忆卡片
@@ -24,7 +24,7 @@
   - Start an active recall session for DINOv2
 
 ### connect（关联）
-当用户希望建立论文关系、构建 Obsidian 双向链接或更新 MOC（Map of Content）时触发。
+当用户希望建立论文关系，或更新目标平台中的链接、relation、MOC/索引时触发。
 - **触发示例**：
   - 这篇论文和哪些论文有关
   - 加入我的 Obsidian 知识图谱
@@ -70,7 +70,7 @@
 
 1. **顺序执行**：如果用户说"先压缩论文 X，再和 Y 对比"，先执行 `compress`，再执行 `compare`。
 2. **compress + connect**：如果用户说"压缩这篇新论文并和 CLIP 关联起来"，路由到 `compress`，但确保「与其他论文的关系」章节完整填写，并给出反向链接建议。
-3. **compare + connect**：如果用户说"对比 CLIP 和 DINOv2 并在我的 Obsidian 图谱里连接起来"，先执行 `compare`，再输出双向链接建议。
-4. **compress + attachment**：生成新笔记时，在内容结构完成后提取核心图、写入笔记同级附件目录并验证标准 Markdown 链接。
+3. **compare + connect**：先执行 `compare`，再按 profile 的平台和 backlink 策略记录关系。
+4. **compress + attachment**：生成新 Memory 时，在内容结构完成后按 profile 保存或上传核心图，并验证引用。
 5. **update + attachment**：正文理解和图片都变化时，分别执行内容更新规则与附件规则；仅附件路径变化不属于理解更新。
-6. **意图不明时询问**：如果意图完全无法判断，列出检测到的可能模式并请用户选择。
+6. **意图不明时询问**：只有不同模式会显著改变产物时，列出检测到的可能模式并请用户选择。

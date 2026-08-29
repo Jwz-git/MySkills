@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "帮我把 CLIP 这篇论文整理成 Standard Memory 格式的复习笔记，说明图像和文本是如何进行对比对齐的。",
+      "prompt": "当前资料库已有 .paper-memory.yaml：memory.provider 为 obsidian，Memory 使用现有 Standard Memory 模板，links.style 为 wiki，attachments.mode 为 local，attachments.root_pattern 为 ./assets/${noteFileName}，metadata.fields 为 title/date/tags。帮我把 CLIP 这篇论文整理成 Standard Memory 格式的复习笔记，说明图像和文本是如何进行对比对齐的。",
       "expected_output": "Standard Memory output matching the template with details of CLIP's dual-encoder symmetric contrastive loss training, WIT-400M dataset, and limitations.",
       "expectations": [
         "Output contains YAML frontmatter matching standard-memory template.",
@@ -16,7 +16,7 @@
     },
     {
       "id": 2,
-      "prompt": "复习 CLIP 论文，考考我。",
+      "prompt": "当前资料库已配置 Memory 根目录和 review.persistence: body。复习 CLIP 论文，考考我。",
       "expected_output": "An interactive active recall review prompt starting with Stage 1 (Free Recall): '请不用看笔记，用一句话说明这篇论文解决什么问题，以及核心方法是什么。'",
       "expectations": [
         "Prompt initiates active recall without showing the paper summary or answers first.",
@@ -25,7 +25,7 @@
     },
     {
       "id": 3,
-      "prompt": "把 VLM-Loc 和 CLIP、Text2Loc 连接起来，建立它们之间的双向链接，并给出反向链接建议。",
+      "prompt": "当前资料库 profile 配置 memory.provider: obsidian、links.style: wiki、links.backlinks: suggest。把 VLM-Loc 和 CLIP、Text2Loc 连接起来，建立它们之间的双向链接，并给出反向链接建议。",
       "expected_output": "Accurate relationship categories (builds-on, same-task) with Wiki-links and bidirectional backlink suggestions.",
       "expectations": [
         "Includes Wiki Links format [[CLIP]] and [[Text2Loc]].",
@@ -45,21 +45,21 @@
     },
     {
       "id": 5,
-      "prompt": "整理 /vault/papers 下论文笔记的 tags，尽量使用中文。当前同时存在 paper/vision-language、论文/多模态、论文/定位和任务/定位，以及分散在方法/表征学习和任务/表征学习下的同义标签。只改 frontmatter。",
+      "prompt": "该资料库 profile 明确采用中文的论文/方法/任务/模态四维标签体系，并要求 preserve_unknown_fields: true。整理 /vault/papers 下论文笔记的 tags。当前同时存在 paper/vision-language、论文/多模态、论文/定位和任务/定位，以及分散在方法/表征学习和任务/表征学习下的同义标签。只改 frontmatter。",
       "expected_output": "先盘点全目录标签及频次，再给出按论文、方法、任务、模态四个中文维度组织的语义合并方案；消除英文命名空间、文件内重复和跨命名空间同叶标签，同时保留定位、地理定位、地点识别等相关但不等价的任务。",
       "expectations": [
         "修改前汇总全部 frontmatter 标签，而不是逐文件盲目替换。",
         "统一使用论文、方法、任务、模态四个中文命名空间，允许 Transformer、BEV、LoRA 等专名保留英文。",
         "不会在同一篇笔记中同时保留论文/定位和任务/定位；论文维度改用更宽的研究领域。",
         "区分真正同义词与相关但不等价的定位、地理定位、地点识别。",
-        "删除已有 aliases 字段，且不在新笔记中创建 aliases。",
+        "保留 aliases 及 profile 未要求删除的其他元数据字段。",
         "只修改 frontmatter，不为纯元数据调整追加正文理解更新记录。",
         "修改后检查旧命名空间、文件内重复和跨命名空间同叶标签，并报告结果。"
       ]
     },
     {
       "id": 6,
-      "prompt": "把 /vault/科研/论文/imgs 里已经被论文笔记引用的图片迁移到每篇笔记自己的附件目录。只处理图片，保留 PDF 和未引用图片；链接统一改成标准 Markdown。Vault 使用 Custom Attachment Location，attachmentFolderPath 是 ./assets/${noteFileName}。",
+      "prompt": "该资料库 profile 配置 memory.provider: obsidian、attachments.mode: local、attachments.root_pattern: ./assets/${noteFileName}、attachments.link_style: markdown。把 /vault/科研/论文/imgs 里已经被论文笔记引用的图片迁移到每篇笔记自己的附件目录。只处理图片，保留 PDF 和未引用图片。Vault 使用 Custom Attachment Location，attachmentFolderPath 是 ./assets/${noteFileName}。",
       "expected_output": "先盘点图片引用关系，再把只属于单篇笔记的已引用图片移动到该笔记同级的 assets/<笔记名>/，更新为标准 Markdown 相对路径，并验证无断链；共享、未引用和非图片附件保持不变并单独报告。",
       "expectations": [
         "正确解释 ./assets/${noteFileName} 相对于笔记目录，而不是 Vault 根目录。",
@@ -72,7 +72,7 @@
     },
     {
       "id": 7,
-      "prompt": "从 /vault/论文原件/Text2Loc.pdf 中提取总体架构图，放进 /vault/科研/论文/memory/Text2Loc.md。PDF 里的图是矢量图，请适当裁剪后插入笔记。",
+      "prompt": "当前 profile 指定 papers: [{provider: filesystem, location: /vault/论文原件}]、memory: {provider: obsidian, location: /vault/科研/论文/memory}、attachments.mode: local、attachments.root_pattern: ./assets/${noteFileName}、attachments.link_style: markdown。从 Text2Loc.pdf 中提取总体架构图，放进 Text2Loc Memory。PDF 里的图是矢量图，请适当裁剪后插入笔记。",
       "expected_output": "渲染包含总体架构图的页面并裁剪核心图区域；去除页眉、页脚、页码、正文和大块空白，同时保留完整子图、图例、坐标轴、标注及必要图题。图片写入笔记同级 assets/Text2Loc/，以标准 Markdown 相对路径引用，并在原始分辨率下视觉复核。",
       "expectations": [
         "不会只使用 PDF 图片对象提取而遗漏矢量流程图；必要时以 scale=3 或更高渲染页面。",
@@ -81,6 +81,64 @@
         "图片保存到 /vault/科研/论文/memory/assets/Text2Loc/。",
         "笔记使用 ![说明](./assets/Text2Loc/<文件名>)，不使用 ![[...]]。",
         "不会移动 PDF 原文，也不会删除任务开始前已有的未引用图片。"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "帮我启用 paper-memory，以后帮我整理和复习论文。",
+      "expected_output": "发现没有本地 profile 后，先集中询问 Memory 存储及位置、论文来源和本次权限范围，并说明后续只按任务需要确认链接、附件和元数据策略；此时不臆造目录，也不直接生成论文笔记。",
+      "expectations": [
+        "询问用户使用本地 Markdown、Obsidian、Notion 或其他 Memory 存储及其位置。",
+        "询问论文 PDF 或其他来源在哪里，允许来源与 Memory 使用不同平台。",
+        "询问本次是只读、允许创建还是允许更新既有 Memory。",
+        "优先一次集中询问，而不是逐项多轮盘问。",
+        "说明确认后会在 Memory 根目录保存 .paper-memory.yaml。",
+        "不会通过修改共享 SKILL.md 保存用户配置。"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "目标 Memory 目录已经存在有效的 .paper-memory.yaml，其中 memory.provider=markdown、links.style=markdown、tags.strategy=preserve。把这篇论文写成 Standard Memory。",
+      "expected_output": "直接读取并复用最近的 profile，不重复询问平台、目录或标签规范；保留 Standard Memory 章节结构并使用普通 Markdown 语义。",
+      "expectations": [
+        "不会重复询问 profile 中已有的信息。",
+        "不会使用 Obsidian Wiki Link 或创建 MOC。",
+        "不会把中文四维标签体系强加到 tags.strategy=preserve 的资料库。"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "我的论文 PDF 在本地 /papers，但 Memory 放在 Notion database abc123。请初始化 paper-memory；Notion properties 已有 Title、Year、Tags，不要改 database schema。",
+      "expected_output": "把论文来源和 Memory 存储分别建模，并询问 profile 的本地保存目录；确认写入范围后生成 profile。Notion metadata 映射到现有 properties，不把 YAML frontmatter 写进页面，也不声称本地文件路径已经上传。",
+      "expectations": [
+        "memory.provider 为 notion 且 memory.location 使用 abc123。",
+        "papers 包含 filesystem=/papers。",
+        "询问 .paper-memory.yaml 的本地保存目录，而不是尝试写进 Notion。",
+        "不会把 memory.location 写成不存在的本地目录。",
+        "不会创建或修改 Notion database properties。",
+        "不会把 YAML frontmatter 作为 Notion 页面正文。"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "把这篇关于双重差分识别策略的经济学实证论文整理成 Standard Memory。",
+      "expected_output": "保持 Standard Memory 章节不变，但把方法流程解释为研究设计流程，把关键模块解释为样本、处理、对照、变量和识别假设，把核心公式解释为估计模型，把实验证明解释为估计结果与因果边界。",
+      "expectations": [
+        "不会虚构神经网络、张量、损失函数、GPU 或消融实验。",
+        "方法流程覆盖样本、处理组、对照组和估计步骤。",
+        "局限讨论平行趋势、混杂、稳健性和外部效度。",
+        "Standard Memory 的原有章节标题保持不变。"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "profile 的 tags.strategy=preserve、reject_aliases=false，附件 root_pattern=./media/${noteFileName}。审计本地 Markdown Memory。",
+      "expected_output": "标签审计保留 aliases 和任意既有标签体系；附件审计以 ./media/<笔记名> 作为期望目录，不使用硬编码 assets/<笔记名>。",
+      "expectations": [
+        "aliases 不会被判为错误。",
+        "英文或无命名空间标签不会仅因旧推荐 taxonomy 被判为错误。",
+        "附件位置依据 profile 的 root_pattern 展开。",
+        "只有 link_style=markdown 时 Wiki 图片才被判为格式不一致。"
       ]
     }
   ]

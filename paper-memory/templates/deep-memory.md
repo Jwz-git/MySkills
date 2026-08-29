@@ -22,7 +22,7 @@ tags: []
 <!-- 最多三条。明确区分：研究洞察 vs. 工程实现 vs. 普通组件。 -->
 
 # 方法流程
-<!-- 优先使用论文原图（系统架构图/流程图），不要自行绘制 Mermaid 图。图片放在当前笔记同级的 assets/笔记名/，只使用标准 Markdown 相对链接，例如 ![方法流程](./assets/CLIP/fig1_overview.png)。如果无法嵌入原图，才用简短文字描述核心步骤（输入 → 编码 → 对齐 → 输出）。 -->
+<!-- 优先使用能准确表达方法的论文原图；图片位置和链接格式遵循本地 profile。无法嵌入原图时，用简短文字描述核心步骤（输入 → 编码 → 对齐 → 输出）。 -->
 
 # 关键模块
 <!-- 对每个关键模块，描述：名称、输入、输出、作用、为什么需要、去掉后可能发生什么。 -->
@@ -48,19 +48,19 @@ tags: []
 # 与其他论文的关系
 
 ## 前置基础
-- [[PriorWork]]：关系说明（如 builds-on, uses-as-loss）
+- [前置论文链接，按 profile 渲染]：关系说明（如 builds-on, uses-as-component）
 
 ## 同任务工作
-- [[PeerWork]]：关系说明（如 same-task, contradicts）
+- [同问题论文链接，按 profile 渲染]：关系说明（如 same-question, contradicts）
 
 ## 思想相似
-- [[ParallelWork]]：关系说明（如 similar-idea）
+- [相似论文链接，按 profile 渲染]：关系说明（如 similar-idea）
 
 ## 后续改进
-- [[FollowupWork]]：关系说明（如 improves, extends-to）
+- [后续论文链接，按 profile 渲染]：关系说明（如 improves, extends-to）
 
 ## 关键差异
-- 与 [[ContrastWork]] 相比：关键差异及其成因。
+- 与 [对比论文链接，按 profile 渲染] 相比：关键差异及其成因。
 
 ## 深度关系分析 (Deep Relational Graph Context)
 <!-- 提供结构化的双向链接分析和 MOC 归属建议。仅在 Deep Memory 中出现。 -->

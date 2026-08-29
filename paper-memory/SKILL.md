@@ -1,65 +1,65 @@
 ---
 name: paper-memory
-description: 只有在处理学术论文（包括总结、复习、对比、主动回忆、提取论文核心图表等），或者创建、修改、迁移该技能生成的 Markdown/Obsidian 论文笔记及其 frontmatter、tags、图片附件时才调用此技能。涉及论文图片时，应维护笔记同级的 assets/<笔记名>/ 目录和标准 Markdown 相对链接。通用编程、系统配置、普通图片整理或其它非论文任务不要调用。
+description: 处理学术论文的长期记忆工作流，包括结构化总结、主动回忆、论文对比、知识关联、理解更新和核心图表提取；也用于创建或维护该技能生成的论文 Memory。支持本地 Markdown、Obsidian、Notion 等不同存储环境，并在首次使用时建立本地配置。通用编程、普通文件整理或非论文任务不要调用。
 ---
 
 # 论文记忆 Skill
 
-一个专为研究者和学习者设计的 Skill，用于在兼容 Obsidian 双向链接、同时保持标准 Markdown 图片可移植性的知识网络中，对科学论文进行压缩、复习、关联、比较和更新。
+将论文压缩为结构稳定、可长期复习的 Memory，并支持主动回忆、论文对比、知识关联和非破坏性理解更新。Memory 的正文结构由 [templates/](templates/) 定义；存储平台、目录、链接、元数据、标签和附件规则由用户的本地 profile 决定。
 
-## 1. 核心定位
-`paper-memory` 的目标并非从头阅读一篇论文或生成冗长的摘要报告，而是：
-- 将已读/已讨论的论文压缩为可长期复习的记忆卡片。
-- 帮助用户进行主动回忆练习，而非被动阅读。
-- 将论文无缝集成到 Obsidian 知识图谱中，保持清晰的双向链接。
-- 比较论文并安全地更新用户的理解。
-- 区分论文事实、用户理解、AI 分析和假说。
+## 1. 首次使用与本地 profile
 
-## 2. 模式路由概览
-根据用户意图，路由到以下五种内容模式之一；图片附件是可独立执行、也可与内容模式组合的横切子流程。详细触发条件请参阅 [references/routing.md](references/routing.md)：
-- **compress**：将论文细节压缩为 Flash Card、Standard Memory 或 Deep Memory 格式。
-- **review**：进行交互式主动回忆复习。
-- **connect**：构建 Obsidian 双向 Wiki 链接并更新 Map of Content（MOC）。
-- **compare**：按照标准化维度比较多篇论文。
-- **update**：对已有论文笔记进行安全的、非破坏性的更新。
-- **attachment 子流程**：提取、引用、审计或迁移论文图片，不因纯附件维护改写论文理解或追加理解更新记录。
+任何会读取、创建或修改持久化论文资料的任务，开始前先执行 [首次配置与本地化规范](references/setup-profile.md)：
 
-## 3. 工作流程
-当此 Skill 被触发时：
-1. **检测水平与意图**：
-   - 评估用户的专业水平：Beginner、Intermediate 或 Advanced。参见 [references/user-levels.md](references/user-levels.md)。
-   - 确定目标模式和所需粒度（Flash Card、Standard Memory、Deep Memory）。
-2. **查阅参考指南**：
-   - **compress** 模式：加载 [references/compress-guide.md](references/compress-guide.md)。
-   - **review** 模式：加载 [references/review-guide.md](references/review-guide.md)。
-   - **connect** 模式：加载 [references/connect-obsidian.md](references/connect-obsidian.md)。
-   - **compare** 模式：加载 [references/compare-guide.md](references/compare-guide.md)。
-   - **update** 模式：加载 [references/update-guide.md](references/update-guide.md)。
-   - **生成或整理标签**：加载 [references/tag-taxonomy.md](references/tag-taxonomy.md)；批量修改后运行 `scripts/audit_tags.py`。
-   - **提取、引用或迁移论文图片**：加载 [references/attachment-guide.md](references/attachment-guide.md)。
-   - 始终应用 [references/evidence-rules.md](references/evidence-rules.md) 以确保事实完整性。
-3. **执行模式特定操作**：
-   - 使用 [templates/](templates/) 中的模板渲染相应布局。
-   - 确保 Obsidian 文件使用简洁命名：`CLIP.md`、`DINOv2.md` 或 `ALIGN-2021.md`。
-4. **确保双向链接与 MOC 链接**：
-   - 提供"反向更新建议"，或在获得权限后直接更新文件。
+1. 使用 `scripts/manage_profile.py show <目标路径>` 查找并读取当前资料库的 `.paper-memory.yaml`。
+2. 找到后读取并遵循，不重复询问已配置且与本次任务无冲突的信息。
+3. 找不到时，在执行持久化操作前一次确认：Memory 存储及位置、论文来源、本次只读/创建/更新范围；远程存储还要确认 profile 的本地保存目录。
+4. 根据平台和任务继续确认真正影响结果的链接、附件、元数据及标签策略；不得擅自套用 Obsidian 或当前示例中的约定。
+5. 向用户复述配置并获得确认后，使用 `scripts/manage_profile.py init` 写入 profile，再运行 `validate`。本地 Memory 默认写在 Memory 根目录；远程 Memory 写在用户确认的本地配置目录。不要为了本地化改写本 Skill 的 `SKILL.md` 或共享 references。
 
-## 4. Obsidian Vault 路径配置
-首次使用时，优先从用户提供的文件、当前工作目录和 `.obsidian/` 配置识别 Vault；只有无法可靠定位且写入位置会影响结果时才询问路径。在 `connect`、`update` 或图片附件操作中拥有写入权限时，使用该路径定位并修改已有笔记。若无法确定 Vault，则以 Markdown 代码块输出笔记，并明确图片的建议相对路径，不臆造或写入未知目录。
+纯对话式解释或用户明确只要临时输出、不落盘时，可以跳过 profile，但不得臆造目录或平台功能。
 
-## 5. 约束与规则
-- **禁止幻觉**：明确标注论文事实、用户理解、AI 分析和假说。使用"当前材料无法确认"/"论文未报告"/"尚未核验"来替代猜测。
-- **内部笔记链接**：论文之间的语义连接使用 Wiki 链接（如 `[[CLIP]]` 或 `[[CLIP|CLIP contrastive learning]]`）。Wiki 链接禁止包裹反引号，目标中不包含 `.md` 后缀。
-- **图片附件链接**：图片不使用 `![[...]]`。统一使用标准 Markdown 图片语法 `![说明](./assets/笔记名/图片名.png)`，使链接在 Obsidian 之外也可解析。`./` 相对于当前笔记所在目录，不表示 Vault 根目录。
-- **Frontmatter**：论文笔记只保留 `title`、`date`、`tags`，不创建或保留 `aliases`。简称直接使用简洁文件名和 Wiki 链接表达，避免别名自动解析造成链接歧义。
-- **图片与可视化**：展示架构与模块流向时优先使用论文原图。LaTeX PDF 的流程图可能由矢量路径和文本组成，不能只依赖图片对象提取；按 [图片附件规范](references/attachment-guide.md) 完成页面渲染、裁剪、落盘、引用和断链验证。既有未引用图片只报告，不自动删除；仅可清理本次任务明确生成且已确认无用的临时文件。
-- **水平自适应**：根据用户水平动态调整技术词汇和内容结构。
-- **标签规范**：默认使用中文命名空间 `论文/...`、`方法/...`、`任务/...`、`模态/...`，专名可保留英文。标签必须表示不同分类维度，不能仅把旧标签逐字翻译后留下同义项。生成或批量整理标签时，完整执行 [标签分类与语义去重规范](references/tag-taxonomy.md)。
+## 2. 模式路由
 
-## 6. 完成标准
-- **Compress**：一份遵循目标模板的结构化记忆文件，侧重于"为什么"和主要流程，而非样板细节。
-- **Review**：一次交互式主动回忆会话，测试用户记忆，对回答进行 10 分制评分，并识别知识空白。
-- **Connect**：正确的双向链接、清晰的关系分类以及 MOC 集成。
-- **Compare**：使用一致维度进行的并排分析，并附带选择建议。
-- **Update**：以日志形式追加到"理解更新记录"部分的变更记录，不擦除历史内容。
-- **图片附件**：所有已引用本地图片存在于其笔记同级的 `assets/<笔记名>/`，使用标准 Markdown 相对链接；无断链、无错误归属，PDF 与既有未引用图片未被误迁移或误删。
+根据用户意图选择内容模式；图片附件是可单独执行或与内容模式组合的横切流程。详细规则见 [references/routing.md](references/routing.md)：
+
+- **compress**：生成 Flash Card、Standard Memory 或 Deep Memory。
+- **review**：进行交互式主动回忆。
+- **connect**：建立论文关系，并按平台能力维护链接或索引。
+- **compare**：按一致维度比较多篇论文。
+- **update**：透明、非破坏性地更新已有理解。
+- **attachment**：提取、引用、审计或迁移论文图片；纯附件维护不追加理解更新记录。
+
+## 3. 执行流程
+
+1. 加载本地 profile；首次持久化使用时先完成配置。
+2. 判断用户意图、论文类型、所需粒度和必要的讲解深度。非计算论文或混合论文加载 [references/paper-types.md](references/paper-types.md)；只有用户表达不足以选择输出深度时，才参考 [references/user-levels.md](references/user-levels.md)。
+3. 按模式加载对应指南：
+   - compress：[references/compress-guide.md](references/compress-guide.md)
+   - review：[references/review-guide.md](references/review-guide.md)
+   - connect：[references/connect-guide.md](references/connect-guide.md)，并只加载 profile 对应的平台指南
+   - compare：[references/compare-guide.md](references/compare-guide.md)
+   - update：[references/update-guide.md](references/update-guide.md)
+   - 标签生成或整理：[references/tag-taxonomy.md](references/tag-taxonomy.md)
+   - 图片操作：[references/attachment-guide.md](references/attachment-guide.md)
+4. 始终应用 [references/evidence-rules.md](references/evidence-rules.md)。
+5. 使用 [templates/](templates/) 中的目标模板；保持模板正文的章节结构，不因平台不同删改核心章节。
+6. 写入前确认目标位于 profile 指定范围内；写入后验证链接、附件和受影响文件。
+
+## 4. 通用约束
+
+- **证据边界**：明确区分论文事实、用户理解、AI 分析和待验证假设。缺失信息使用“当前材料无法确认”“论文未报告”或“尚未核验”，不得补造。
+- **尊重已有系统**：已有知识库的命名、链接、元数据、标签和附件约定优先于默认建议。发现配置与实际内容不一致时，先报告，不静默迁移或重写。
+- **平台能力边界**：只使用目标平台实际支持的功能。Obsidian Wiki Link、Notion database property、Markdown frontmatter 等不能互相假定等价。
+- **Memory 结构稳定**：Flash、Standard 和 Deep Memory 的正文结构保持与模板一致；平台差异只影响存储、链接、元数据和附件表达。
+- **非破坏性维护**：既有未引用附件只报告，不自动删除；只可清理本次任务明确生成且已确认无用的临时文件。
+- **图片质量**：需要展示架构或模块流向时优先采用能准确表达论文内容的原图；提取后视觉复核完整性和可读性。
+
+## 5. 完成标准
+
+- **Compress**：遵循目标模板，突出研究问题、核心方法、作用、证据边界和局限。
+- **Review**：不先泄露答案；根据 Memory 进行主动回忆、反馈和分维度评分。
+- **Connect**：关系语义准确，并使用 profile 规定的平台链接或索引方式。
+- **Compare**：使用适合论文类型的一致维度，明确不可直接比较的实验条件，并给出有前提的选择建议。
+- **Update**：保留历史语义；正文变化有可追踪的理解更新记录，纯元数据或附件维护除外。
+- **Attachment**：所有已引用本地图片可解析、无错误归属；论文原件及既有未引用文件未被误迁移或误删。

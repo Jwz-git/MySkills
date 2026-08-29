@@ -1,0 +1,6 @@
+interface:
+  display_name: "文章归档"
+  short_description: "提取网页文章并忠实归档为 Markdown"
+  default_prompt: "使用 $article-archiver 提取这个文章 URL，去噪后按原标题和原文归档为 Markdown，并下载文章资源。"
+policy:
+  allow_implicit_invocation: true

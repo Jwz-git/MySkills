@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit paper-note frontmatter tags and reject aliases without modifying files."""
+"""Read-only audit of local Markdown tags using a paper-memory profile."""
 
 from __future__ import annotations
 
@@ -9,9 +9,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-
-ALLOWED_NAMESPACES = {"论文", "方法", "任务", "模态"}
-ENGLISH_NAMESPACES = {"paper", "method", "task", "modality"}
+from profile_config import ProfileError, find_profile, load_profile, validate_profile
 
 
 def frontmatter_lines(path: Path) -> list[str] | None:
@@ -34,7 +32,7 @@ def clean_scalar(value: str) -> str:
 def parse_inline_list(value: str) -> list[str]:
     value = value.strip()
     if not (value.startswith("[") and value.endswith("]")):
-        raise ValueError("tags 必须是 YAML 列表")
+        raise ValueError("tags must be a YAML list")
     inner = value[1:-1].strip()
     if not inner:
         return []
@@ -51,21 +49,23 @@ def extract_tags(lines: list[str]) -> tuple[list[str] | None, str | None]:
                 return parse_inline_list(value), None
             except ValueError as error:
                 return None, str(error)
-
         tags: list[str] = []
         for following in lines[index + 1 :]:
             if following.startswith("  - "):
                 tags.append(clean_scalar(following[4:]))
-                continue
-            if following.strip() == "":
-                continue
-            break
+            elif following.strip():
+                break
         return tags, None
     return None, None
 
 
-def audit(root: Path, strict_cross_namespace: bool) -> tuple[dict[str, object], bool]:
+def audit(root: Path, profile: dict[str, object], strict_cross_namespace: bool) -> tuple[dict[str, object], bool]:
     files = sorted(root.rglob("*.md")) if root.is_dir() else [root]
+    tag_policy = profile["tags"]
+    assert isinstance(tag_policy, dict)
+    strategy = str(tag_policy.get("strategy", "preserve"))
+    allowed = {str(item) for item in tag_policy.get("allowed_namespaces", [])}
+    reject_aliases = bool(tag_policy.get("reject_aliases", False))
     errors: list[str] = []
     warnings: list[str] = []
     all_tags: list[str] = []
@@ -77,84 +77,81 @@ def audit(root: Path, strict_cross_namespace: bool) -> tuple[dict[str, object], 
         frontmatter = frontmatter_lines(path)
         display_path = str(path)
         if frontmatter is None:
-            warnings.append(f"{display_path}: 缺少完整 Frontmatter")
+            warnings.append(f"{display_path}: no complete frontmatter")
             continue
-
         if any(line.startswith("aliases:") for line in frontmatter):
             alias_fields += 1
-            errors.append(f"{display_path}: 禁止使用 aliases 字段")
-
+            if reject_aliases:
+                errors.append(f"{display_path}: aliases forbidden by profile")
         tags, parse_error = extract_tags(frontmatter)
         if parse_error:
             errors.append(f"{display_path}: {parse_error}")
             continue
         if tags is None:
-            warnings.append(f"{display_path}: 缺少 tags 字段")
+            warnings.append(f"{display_path}: no tags field")
             continue
-
         files_with_tags += 1
         duplicates = sorted({tag for tag in tags if tags.count(tag) > 1})
         if duplicates:
-            errors.append(f"{display_path}: 文件内重复标签: {', '.join(duplicates)}")
-
+            errors.append(f"{display_path}: duplicate tags: {', '.join(duplicates)}")
         for tag in tags:
             all_tags.append(tag)
             if "/" not in tag:
-                errors.append(f"{display_path}: 标签缺少命名空间: {tag}")
+                if strategy in {"recommended", "custom"} and allowed:
+                    errors.append(f"{display_path}: tag lacks namespace: {tag}")
                 continue
             namespace, leaf = tag.split("/", 1)
-            if namespace in ENGLISH_NAMESPACES:
-                errors.append(f"{display_path}: 残留英文命名空间: {tag}")
-            elif namespace not in ALLOWED_NAMESPACES:
-                errors.append(f"{display_path}: 未知命名空间: {tag}")
+            if strategy in {"recommended", "custom"} and allowed and namespace not in allowed:
+                errors.append(f"{display_path}: namespace not allowed by profile: {tag}")
             if not leaf:
-                errors.append(f"{display_path}: 标签叶值为空: {tag}")
+                errors.append(f"{display_path}: empty tag leaf: {tag}")
             leaf_uses[leaf].append({"namespace": namespace, "file": display_path, "tag": tag})
 
     cross_namespace = {
-        leaf: uses
-        for leaf, uses in sorted(leaf_uses.items())
+        leaf: uses for leaf, uses in sorted(leaf_uses.items())
         if len({item["namespace"] for item in uses}) > 1
     }
     if cross_namespace:
-        message = "跨命名空间同叶标签: " + ", ".join(cross_namespace)
-        (errors if strict_cross_namespace else warnings).append(message)
-
+        message = "same leaf in multiple namespaces: " + ", ".join(cross_namespace)
+        if strict_cross_namespace and strategy in {"recommended", "custom"}:
+            errors.append(message)
+        else:
+            warnings.append(message)
     result: dict[str, object] = {
-        "root": str(root),
-        "markdown_files": len(files),
-        "files_with_tags": files_with_tags,
-        "alias_fields": alias_fields,
-        "tag_occurrences": len(all_tags),
-        "unique_tags": len(set(all_tags)),
-        "cross_namespace_leafs": cross_namespace,
-        "errors": errors,
-        "warnings": warnings,
+        "root": str(root), "tag_strategy": strategy, "markdown_files": len(files),
+        "files_with_tags": files_with_tags, "alias_fields": alias_fields,
+        "tag_occurrences": len(all_tags), "unique_tags": len(set(all_tags)),
+        "cross_namespace_leafs": cross_namespace, "errors": errors, "warnings": warnings,
     }
     return result, not errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("path", type=Path, help="论文 Markdown 文件或目录")
-    parser.add_argument(
-        "--strict-cross-namespace",
-        action="store_true",
-        help="将跨命名空间同叶标签视为错误",
-    )
-    parser.add_argument("--json", action="store_true", help="输出 JSON")
+    parser.add_argument("path", type=Path, help="Markdown file or directory")
+    parser.add_argument("--profile", type=Path, help="Profile path; defaults to nearest profile")
+    parser.add_argument("--strict-cross-namespace", action="store_true")
+    parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
-
-    if not args.path.exists():
-        parser.error(f"路径不存在: {args.path}")
-
-    result, passed = audit(args.path, args.strict_cross_namespace)
+    root = args.path.expanduser().resolve()
+    if not root.exists():
+        parser.error(f"path does not exist: {root}")
+    profile_path = args.profile.expanduser().resolve() if args.profile else find_profile(root)
+    if profile_path is None:
+        parser.error("no .paper-memory.yaml found; pass --profile")
+    try:
+        profile = load_profile(profile_path)
+    except ProfileError as error:
+        parser.error(str(error))
+    errors = validate_profile(profile)
+    if errors:
+        parser.error("invalid profile: " + "; ".join(errors))
+    result, passed = audit(root, profile, args.strict_cross_namespace)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        for key in ("markdown_files", "files_with_tags", "alias_fields", "tag_occurrences", "unique_tags"):
+        for key in ("tag_strategy", "markdown_files", "files_with_tags", "alias_fields", "tag_occurrences", "unique_tags"):
             print(f"{key}={result[key]}")
-        print(f"cross_namespace_leafs={len(result['cross_namespace_leafs'])}")
         for warning in result["warnings"]:
             print(f"WARNING: {warning}")
         for error in result["errors"]:
